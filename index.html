@@ -283,6 +283,17 @@ button.cell:hover:not(:disabled) { background: var(--s3); }
 .tools-grid button.sel { background: var(--s3); color: var(--tx); box-shadow: inset 0 0 0 2px var(--tx); }
 .tools-grid button.best { box-shadow: inset 0 0 0 2px #e9eef5, 0 0 20px rgba(232, 238, 246, 0.18); color: var(--tx); }
 .tools-grid button:disabled { opacity: 0.25; }
+.tools-grid button.alt { color: var(--tx); outline: 1px dashed rgba(232, 238, 246, 0.55); outline-offset: -4px; }
+.tpaths { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 8px; width: min(100%, 460px); }
+.tpath { position: relative; display: grid; gap: 4px; align-content: start; padding: 10px 12px 34px; border-radius: 12px; background: var(--s2); text-align: left; transition: background var(--t-fast), box-shadow var(--t-fast); }
+.tpath:hover { background: var(--s3); }
+.tpath.main { background: var(--s3); box-shadow: inset 0 0 0 1px rgba(232, 238, 246, 0.6); }
+.tpath .tp-k { font-size: var(--fs-xs); color: var(--tx3); }
+.tpath .tp-n { display: flex; align-items: center; gap: 8px; font-size: var(--fs-s); font-weight: 600; color: var(--tx); }
+.tpath .tp-n svg { width: 18px; height: 18px; }
+.tpath .tp-d { font-size: var(--fs-xs); color: var(--tx2); line-height: 1.45; }
+.tpath .tp-go { position: absolute; right: 12px; bottom: 10px; font-size: var(--fs-xs); font-weight: 600; color: var(--tx2); }
+.tpath.main .tp-go, .tpath:hover .tp-go { color: var(--tx); }
 
 /* Under-board toolbar */
 .bar { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; }
@@ -2707,7 +2718,7 @@ self.onmessage = function (e) {
       return t + rolloutLine();
     }
     if (step === 'event') return '<p>Цепная реакция почти всегда выгодна. Казнь выгодна, если палач растёт больше, чем стоят убранные узники.</p>' + rolloutLine();
-    if (step === 'tool') return '<p>Инструмент даёт первый Высший узник за забег. Ранг инструмента (S–D) показывает, насколько он поднимает итог забега для вашей цели. Подробнее — в вики, раздел «Инструменты».</p>';
+    if (step === 'tool') return '<p>Инструмент даёт первый Высший узник за забег. Ранг инструмента (S–D) показывает, насколько он поднимает итог забега для вашей цели. Иногда рядом появляется второй путь — «На связку»: инструмент чуть слабее в среднем, но с более высоким потолком, если позже придёт его пара. Шанс пары считается по вашим записям и уточняется сам. Подробнее — в вики, раздел «Инструменты».</p>';
     if (step === 'gift') return '<p>Каждая радуга открывает дар хранилища. Дары можно брать повторно; помощник сравнивает все четыре прогонами по вашей текущей доске, поэтому совет может меняться от забега к забегу.</p>' + rolloutLine();
     if (step === 'devour') return '<p>В игре видно, кем стал узник: его редкость и вид. Отметьте это, и помощник продолжит.</p>';
     if (step === 'edit') return '<p>Расставьте всё как в игре: день, узников, метки, инструменты и радуги в хранилище. Сундуки отдельно считать не нужно: на бунте каждый узник даёт сундук своей редкости.</p>';
@@ -2731,13 +2742,16 @@ self.onmessage = function (e) {
       canRefresh = sub.refreshAvail && (measured ? a.rec.type === 'refresh' : !P.toolRank.slice(0, 3).includes(best));
       if (measured && a.rec.type === 'refresh') best = a.stats.filter((x) => x.action.type === 'choose').sort((p1, p2) => p2.mean - p1.mean)[0].action.id;
     }
-    const grid = `<div class="tools-grid">${C.TOOL_IDS.map((t) => `<button data-tool="${t}" class="${sel.includes(t) ? 'sel' : ''} ${best === t ? 'best' : ''}" ${C.has(s, t) ? 'disabled' : ''} data-tip="${toolTip(t)}" aria-label="${TOOLS[t].n}, ранг ${toolTier(t)}">${ico(t)}</button>`).join('')}</div>`;
+    const combo = sel.length === 3 && measured && !canRefresh ? comboPick(s, sel, best, a) : null;
+    const grid = `<div class="tools-grid">${C.TOOL_IDS.map((t) => `<button data-tool="${t}" class="${sel.includes(t) ? 'sel' : ''} ${best === t ? 'best' : ''} ${combo && combo.id === t ? 'alt' : ''}" ${C.has(s, t) ? 'disabled' : ''} data-tip="${toolTip(t)}" aria-label="${TOOLS[t].n}, ранг ${toolTier(t)}">${ico(t)}</button>`).join('')}</div>`;
     const head0 = sel.length < 3
       ? `<div class="head"><h3>Высший! Выбор инструмента</h3><div class="sub">Отметьте 3 инструмента, которые предложила игра: осталось ${3 - sel.length}. Наведите на инструмент, чтобы прочитать, что он делает.</div></div>`
       : `<div class="head"><h3>${canRefresh ? 'Обновите предложение' : `Возьмите ${TOOLS[best].n}`}</h3><div class="sub">${canRefresh ? 'Новое предложение в среднем даст больше, чем лучшее из этих трёх на вашей доске.' : TOOLS[best].d}${measured ? '' : ' <span class="hint">Сверяю с вашей доской…</span>'}</div></div>`;
     const refreshToggle = sub.refreshKnown ? '' : `<button class="switch ${sub.refreshAvail ? 'on' : ''}" data-act="refreshToggle" data-tip="Twin Inquisitors ранга 2–3 дают обновление инструментов с шансом 50%. Отметьте, если в игре есть кнопка обновления."><i></i>Обновление есть</button>`;
-    const acts = sel.length === 3 ? `<div class="acts">${canRefresh ? '<button class="btn small primary" data-act="toolRefresh">Обновил</button>' : ''}<button class="btn small ${canRefresh ? 'quiet' : 'primary'}" data-act="toolTake" data-id="${best}">${ico(best)}Взял</button>${refreshToggle}</div>` : '';
-    const notes = sel.length === 3 && best ? toolNotes(s, best, measured ? a : null) : '';
+    const take = combo ? '' : `<button class="btn small ${canRefresh ? 'quiet' : 'primary'}" data-act="toolTake" data-id="${best}">${ico(best)}Взял</button>`;
+    const btns = `${canRefresh ? '<button class="btn small primary" data-act="toolRefresh">Обновил</button>' : ''}${take}${refreshToggle}`;
+    const acts = sel.length === 3 ? `${combo ? toolPaths(best, combo) : ''}${btns ? `<div class="acts">${btns}</div>` : ''}` : '';
+    const notes = sel.length === 3 && best ? toolNotes(s, best, measured ? a : null, !!combo) : '';
     // One key while marking (patched in place), a new one only when the advice appears.
     setYard(sel.length === 3 ? 'tool3' : 'tool', `${head0}${acts}${notes}`, grid);
   }
@@ -2750,11 +2764,11 @@ self.onmessage = function (e) {
     return P.pair[k] === undefined ? 0 : P.pair[k] - P.single[a] - P.single[b];
   }
   const q10 = (xs) => { const v = xs.slice().sort((p1, p2) => p1 - p2); return v[Math.floor(v.length * 0.1)]; };
-  function toolNotes(s, best, a) {
+  function toolNotes(s, best, a, paths) {
     const out = [];
     const held = s.toolList.map((h) => ({ h, v: synergy(best, h) })).filter((x) => x.v > 0.05).sort((p1, p2) => p2.v - p1.v);
     if (held.length) out.push(`В связке с ${TOOLS[held[0].h].n}: ещё ${signed(held[0].v)} сверху того, что дают оба по отдельности.`);
-    else if (!s.toolList.length) {
+    else if (!s.toolList.length && !paths) {
       const mates = C.TOOL_IDS.filter((t) => t !== best).map((t) => ({ t, v: synergy(best, t) })).filter((x) => x.v > 0.05).sort((p1, p2) => p2.v - p1.v).slice(0, 2);
       if (mates.length) out.push(`Если игра даст второй инструмент, ищите ${mates.map((m) => TOOLS[m.t].n).join(' или ')}: вместе они сильнее суммы.`);
     }
@@ -2767,6 +2781,54 @@ self.onmessage = function (e) {
       }
     }
     return out.length ? `<div class="toolnotes">${out.map((x) => `<p>${x}</p>`).join('')}</div>` : '';
+  }
+  // Chance that `partner` shows up in a later offer after taking `take`: offers left and offer weights come from the
+  // calibrated log, each missed offer removes one instrument the player takes instead. Fixed seed keeps the number steady.
+  function partnerChance(s, take, partner) {
+    const r = calibratedRules(), extraN = C.extraOffers(r.takes, s.toolList.length + 1);
+    if (!r.extraDays.some((d) => d > s.day)) return 0;
+    const rnd = C.rng32(0x51ab), N = 3000;
+    let hit = 0;
+    for (let i = 0; i < N; i++) {
+      const x = { tools: Object.assign({}, s.tools, { [take]: true }), rules: { toolW: r.toolW } };
+      let k = C.pickW(rnd, extraN), got = false;
+      while (k-- > 0 && !got) { const o = C.drawOffer(x, rnd); if (o.includes(partner)) got = true; else if (o.length) x.tools[o[(rnd() * o.length) | 0]] = true; }
+      if (got) hit++;
+    }
+    return hit / N;
+  }
+  // A second path at an instrument offer: an offered instrument close to the best on this board (rollouts already price
+  // its pair chances in) whose pair with a still-possible instrument beats the best one alone.
+  let comboMemo = { key: '', pick: null };
+  function comboPick(s, sel, best, a) {
+    const P = (LAB.pairs || {})[S.settings.goal === 'rainbow' ? 'rainbow' : 'value'];
+    const ch = a ? a.stats.filter((x) => x.action.type === 'choose') : [];
+    const top = ch.find((x) => x.action.id === best);
+    if (!P || !top) return null;
+    const key = [s.day, s.toolList.join(), sel.join(), best, ch.map((x) => `${x.action.id}${(x.mean / top.mean).toFixed(2)}`).join()].join('|');
+    if (comboMemo.key === key) return comboMemo.pick;
+    const pairOf = (x, p) => P.pair[x < p ? `${x}|${p}` : `${p}|${x}`];
+    const partners = (x) => C.TOOL_IDS.filter((p) => p !== x && !C.has(s, p) && synergy(x, p) >= 0.1).map((p) => ({ p, g: pairOf(x, p), pc: partnerChance(s, x, p) })).filter((z) => z.pc >= 0.15);
+    // Lucky case against lucky case: the best pick may also complete a pair later.
+    const own = partners(best).sort((z1, z2) => z2.g - z1.g)[0];
+    const ceiling = Math.max(P.single[best], own ? own.g : -Infinity);
+    let pick = null;
+    for (const o of sel) {
+      const m = ch.find((x) => x.action.id === o);
+      if (o === best || !m || m.mean < 0.8 * top.mean) continue;
+      for (const z of partners(o)) {
+        const up = (1 + z.g) / (1 + ceiling) - 1;
+        if (up >= 0.05 && (!pick || z.pc * up > pick.pc * pick.up)) pick = { id: o, partner: z.p, pc: z.pc, up, lag: 1 - m.mean / top.mean, own: own && own.g > P.single[best] ? own : null };
+      }
+    }
+    comboMemo = { key, pick };
+    return pick;
+  }
+  function toolPaths(best, combo) {
+    const tip = 'Шанс считается по вашим записям: сколько инструментов обычно приходит за забег, в какие дни и как часто игра предлагает каждый. Прирост — замер лаборатории для пары инструментов. Обе цифры уточняются сами, пока вы играете.';
+    const card = (id, cls, k, d) => `<button class="tpath ${cls}" data-act="toolTake" data-id="${id}"><span class="tp-k">${k}</span><span class="tp-n">${ico(id)}${TOOLS[id].n}</span><span class="tp-d">${d}</span><span class="tp-go">Взял</span></button>`;
+    const ownLine = combo.own ? ` <span data-tip="${tip}">Если позже придёт ${TOOLS[combo.own.p].n} (шанс ${pct(combo.own.pc)}), станет ещё сильнее.</span>` : '';
+    return `<div class="tpaths">${card(best, 'main', 'Надёжнее', `Лучший результат в среднем на вашей доске.${ownLine}`)}${card(combo.id, '', 'На связку', `<span data-tip="${tip}">Если позже придёт ${TOOLS[combo.partner].n} (шанс ${pct(combo.pc)}), забег сильнее лучшего расклада с ${TOOLS[best].n} на ${pct(combo.up)}.</span> ${combo.lag >= 0.005 ? `В среднем на ${pct(combo.lag)} слабее.` : 'В среднем почти поровну.'}`)}</div>`;
   }
   function renderGiftStep() {
     const a = S.analysis;
