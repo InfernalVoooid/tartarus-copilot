@@ -2758,7 +2758,8 @@ self.onmessage = function (e) {
     // The player may ignore the advice: a refresh and every other offered instrument stay one click away.
     const btns = `${canRefresh ? '<button class="btn small primary" data-act="toolRefresh">Обновил</button>' : ''}${take}`;
     const others = sel.filter((t) => t !== best && !(combo && combo.id === t));
-    const quietRefresh = !canRefresh && sub.refreshAvail ? `<button class="linkish" data-act="toolRefresh" data-tip="Если обновили предложение в игре, отметьте это: помощник попросит отметить новые три инструмента.">${ico('restart')}Обновил предложение</button>` : '';
+    // Always offered: the pet settings may be unset or wrong, the player's click is the truth.
+    const quietRefresh = !canRefresh ? `<button class="linkish" data-act="toolRefresh" data-tip="Если обновили предложение в игре, отметьте это: помощник попросит отметить новые три инструмента.">${ico('restart')}Обновил предложение</button>` : '';
     const foot = others.length || quietRefresh || refreshToggle ? `<div class="toolfoot"><div class="tf-l">${others.length ? `<span class="hint">Взяли другой:</span>${others.map((t) => `<button class="opt" data-act="toolTake" data-id="${t}">${ico(t)}${TOOLS[t].n}</button>`).join('')}` : ''}</div><div class="tf-r">${quietRefresh}${refreshToggle}</div></div>` : '';
     const acts = sel.length === 3 ? `${combo ? toolPaths(best, combo) : ''}${btns ? `<div class="acts">${btns}</div>` : ''}${foot}` : '';
     const notes = sel.length === 3 && best ? toolNotes(s, best, measured ? a : null, !!combo) : '';
