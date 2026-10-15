@@ -111,7 +111,7 @@ svg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-widt
 .resume .txt span { color: var(--tx2); font-size: var(--fs-s); }
 .sec { display: grid; gap: 14px; }
 .sec-h { display: flex; align-items: baseline; gap: 10px; }
-.sec-h h2 { margin: 0; font-size: var(--fs-m); font-weight: 600; }
+.sec-h h2 { margin: 0; font-size: var(--fs-m); font-weight: 600; white-space: nowrap; }
 .sec-h span { color: var(--tx3); font-size: var(--fs-s); }
 .goals { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .goal.wide { grid-column: 1 / -1; padding: 12px 16px; }
@@ -498,7 +498,8 @@ button.cell:hover:not(:disabled) { background: var(--s3); }
 .tip .tt-x { margin-top: 6px; color: var(--tx3); font-size: var(--fs-xs); }
 .hist .hbar.lucky::after { content: ''; position: absolute; left: 3px; top: 3px; width: 4px; height: 4px; border-radius: 50%; background: var(--r5); }
 .hist.small .hbar { width: 7px; }
-.sec-act { margin-left: auto; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.sec-act { margin-left: auto; display: flex; align-items: center; justify-content: flex-end; gap: 10px 14px; flex-wrap: wrap; }
+.sec-links { display: flex; align-items: center; gap: 14px; white-space: nowrap; }
 .sec-act .btn.small svg { width: 16px; height: 16px; }
 .linkish.danger { color: var(--danger); text-decoration-color: var(--danger); }
 .disk { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-s); color: var(--tx2); }
@@ -643,7 +644,7 @@ button.cell:hover:not(:disabled) { background: var(--s3); }
 </style>
 <div class="app" id="app">
   <header class="top">
-    <button class="brand" data-act="home" aria-label="Тартар, настройка круга"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="3.5"/><rect x="7.5" y="9.5" width="9" height="5" rx="1.5"/><circle cx="5.6" cy="8" r="1" fill="currentColor" stroke="none"/></svg>Тартар <small>помощник надзирателя</small></button>
+    <button class="brand" data-act="home" aria-label="Тартар, настройка забега"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="3.5"/><rect x="7.5" y="9.5" width="9" height="5" rx="1.5"/><circle cx="5.6" cy="8" r="1" fill="currentColor" stroke="none"/></svg>Тартар <small>помощник надзирателя</small></button>
     <div class="days" id="days" hidden></div>
     <div class="top-right">
       <button class="ghost" data-act="home" id="btn-setup" hidden data-tip="Стратегия, петы, компас и ваша статистика. Доска сохранится."><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.3 3.5h3.4l.5 2.3 1.6.9 2.2-.8 1.7 2.9-1.7 1.6v1.8l1.7 1.6-1.7 2.9-2.2-.8-1.6.9-.5 2.3h-3.4l-.5-2.3-1.6-.9-2.2.8-1.7-2.9 1.7-1.6v-1.8L4.3 8.8 6 5.9l2.2.8 1.6-.9z"/><circle cx="12" cy="12" r="2.6"/></svg><span class="lbl">Настройки</span></button>
@@ -659,7 +660,7 @@ button.cell:hover:not(:disabled) { background: var(--s3); }
         <div class="bar">
           <button class="ghost" data-act="undo" data-tip="Вернуть предыдущий шаг (Ctrl+Z)"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7.5L5 11.5l4 4"/><path d="M5.5 11.5h8a5 5 0 0 1 0 10h-2"/></svg><span class="lbl">Отменить</span></button>
           <button class="ghost" data-act="edit" data-tip="Изменить любую клетку, день или положение надзирателя"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 19.5l1-4 10-10 3 3-10 10z"/><path d="M13.5 7.5l3 3"/></svg><span class="lbl">Править доску</span></button>
-          <button class="ghost" data-act="menuNew" data-tip="Сбросить доску и начать с дня 1"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12a7 7 0 1 0 2.1-5"/><path d="M5 4.5V9h4.5"/></svg><span class="lbl">Новый круг</span></button>
+          <button class="ghost" data-act="menuNew" data-tip="Сбросить доску и начать с дня 1"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12a7 7 0 1 0 2.1-5"/><path d="M5 4.5V9h4.5"/></svg><span class="lbl">Новый забег</span></button>
         </div>
         <div class="minihist" id="minihist"></div>
       </div>
@@ -1653,7 +1654,7 @@ self.onmessage = function (e) {
     guillotine: { n: 'Fanged Guillotine', d: 'Волк ест крыс не только своей, но и любой более низкой редкости.', how: 'Волки становятся «пылесосом» для мелких крыс. Полезно, когда крыс много (гнёзда, Skewered Rat Heads). Без крыс на доске почти ничего не даёт.' },
     hook: { n: 'Sorting Hook', d: 'За дверями больше не бывает Обычных.', how: 'Каждая закрытая дверь становится ценнее: открывайте новые двери охотнее, чем ходите к известным узникам. На замену не влияет.' },
     tongs: { n: 'Iron Tongs of Lust', d: 'Каждое утро случайный мамонт на доске получает метку бивня.', how: 'Замена узника в клетке с бивнем даёт +1 ранг четырём узникам. Заходите к мамонту с бивнем и меняйте его почти каждый день. Если в игре метка остаётся на клетке после замены, это почти эксплойт: помощник спросит об этом после первой такой замены.' },
-    keys: { n: 'Lost Ring of Keys', d: 'Когда патруль открывает дверь, с шансом 80% открываются и обе соседние.', how: 'Быстро наполняет доску. Хорош в начале круга и для цели «Больше сундуков». На полной доске почти бесполезен.' },
+    keys: { n: 'Lost Ring of Keys', d: 'Когда патруль открывает дверь, с шансом 80% открываются и обе соседние.', how: 'Быстро наполняет доску. Хорош в начале забега и для цели «Больше сундуков». На полной доске почти бесполезен.' },
     muzzle: { n: "Raging Beast's Agonizing Muzzle", d: 'Если на доске 3 узника или меньше, укус даёт +2 ранга сверху (втрое быстрее).', how: 'Сильнее всего в первые дни, пока доска пустая: один укус поднимает Обычного до Легендарного. Потом доска заполняется и инструмент засыпает.' },
     fire: { n: 'Searing Branding Iron', d: 'Когда патруль открывает дверь, с шансом 35% узник копируется в другую закрытую клетку.', how: 'Лишний узник той же редкости — лишний сундук и корм для других. Копия того же вида, поэтому оригинал её не съест.' },
     scales: { n: "Warden's Scales", d: 'После замены с шансом 80% показывает самого редкого узника за закрытыми дверями.', how: 'Только информация: помогает выбрать дверь, но рангов не даёт. Почти всегда хуже других вариантов.' },
@@ -1682,12 +1683,12 @@ self.onmessage = function (e) {
   const RELAB_EVERY = 10, RELAB_GAMES = { stats: 2000, tool: 800, pair: 500 };
   function adoptLabCache() { const c = S.settings.labCache; if (c && c.goalStats) Object.assign(LAB, { goalStats: c.goalStats, toolDelta: c.toolDelta, toolRank: c.toolRank, pairs: c.pairs }); }
   const GOALS = [
-    { id: 'value', icon: 'cache', n: 'Растить всех', d: 'Каждый узник на бунте даёт сундук своей редкости, поэтому растим всю доску: едим, когда укус выгоден, и не жертвуем количеством. Подходит почти всем, с петами и без. Результат ровный от круга к кругу; радуг чуть меньше, чем при охоте за ними, зато сундуков заметно больше.', who: 'Ровный результат. Подходит почти всем.' },
-    { id: 'rainbow', icon: 'spark', n: 'Охота за радугами', d: 'Всё подчинено радужным сундукам: узников низкой редкости пускаем в корм, лишь бы цепочка дошла до радуги. Выбирайте, если радужный сундук для вас стоит намного дороже остальных. Минус: сундуков меньше, круги без радуги беднее.', who: 'Когда ценны только радужные сундуки.' },
+    { id: 'value', icon: 'cache', n: 'Растить всех', d: 'Каждый узник на бунте даёт сундук своей редкости, поэтому растим всю доску: едим, когда укус выгоден, и не жертвуем количеством. Подходит почти всем, с петами и без. Результат ровный от забега к забегу; радуг чуть меньше, чем при охоте за ними, зато сундуков заметно больше.', who: 'Ровный результат. Подходит почти всем.' },
+    { id: 'rainbow', icon: 'spark', n: 'Охота за радугами', d: 'Всё подчинено радужным сундукам: узников низкой редкости пускаем в корм, лишь бы цепочка дошла до радуги. Выбирайте, если радужный сундук для вас стоит намного дороже остальных. Минус: сундуков меньше, забеги без радуги беднее.', who: 'Когда ценны только радужные сундуки.' },
     { id: 'mass', icon: 'paw', n: 'Больше сундуков', d: 'Почти не едим и копим количество: к бунту доходит больше всего узников. Подходит, когда низкие сундуки тоже нужны или бунт хочется пройти быстро и стабильно. Минус: радуг примерно вдвое меньше.', who: 'Объём важнее редкости.' },
     { id: 'high', icon: 'target', n: 'Только дорогие', d: 'Растим Легендарных, Высших и радужных, а Обычных и Магических отдаём в корм. Подходит, если мелкие сундуки вам не нужны. По радугам почти как охота за ними, а дорогих сундуков больше.', who: 'Мелкие сундуки не нужны.' },
-    { id: 'mine', icon: 'person', n: 'По моей добыче', d: 'Помощник узнаёт из ваших записей, сколько FE на самом деле приносит сундук каждой редкости, и растит тех узников, которые выгоднее именно вам. Если редкие сундуки у вас почти не дороже обычных, он копит количество; если намного дороже — растит редкость. Чем больше кругов записано, тем точнее.', who: 'Подстраивается под вашу добычу.' },
-    { id: 'custom', icon: 'sliders', n: 'Свои цели', d: 'Отметьте цвета сундуков, которые вам нужны. Помощник построит игру под них: нужных узников будет растить, остальных пустит в корм. Например, только синие для быстрых кругов или только Легендарные и выше.', who: 'Под конкретные цвета сундуков.' },
+    { id: 'mine', icon: 'person', n: 'По моей добыче', d: 'Помощник узнаёт из ваших записей, сколько FE на самом деле приносит сундук каждой редкости, и растит тех узников, которые выгоднее именно вам. Если редкие сундуки у вас почти не дороже обычных, он копит количество; если намного дороже — растит редкость. Чем больше забегов записано, тем точнее.', who: 'Подстраивается под вашу добычу.' },
+    { id: 'custom', icon: 'sliders', n: 'Свои цели', d: 'Отметьте цвета сундуков, которые вам нужны. Помощник построит игру под них: нужных узников будет растить, остальных пустит в корм. Например, только синие для быстрых забегов или только Легендарные и выше.', who: 'Под конкретные цвета сундуков.' },
   ];
   // q: "+X% additional Drop Quantity for all Warden's Caches", a multiplier (tlidb). hp: how much tougher riot monsters get.
   const COMPASS = [
@@ -1864,13 +1865,13 @@ self.onmessage = function (e) {
   }
   function diskNote() {
     if (DISK.state === 'linked') return '';
-    if (DISK.state === 'unsupported') return `<p class="note store">${ico('vault')}Круги хранятся только в этом браузере: время от времени делайте «Экспорт». ${q('Этот браузер не умеет писать прямо в файл на диске. Если очистить данные сайта, круги пропадут; файл «Экспорта» возвращается через «Импорт». Запись в файл работает в Chrome, Edge, Яндекс и Opera.')}</p>`;
+    if (DISK.state === 'unsupported') return `<p class="note store">${ico('vault')}Забеги хранятся только в этом браузере: время от времени делайте «Экспорт». ${q('Этот браузер не умеет писать прямо в файл на диске. Если очистить данные сайта, забеги пропадут; файл «Экспорта» возвращается через «Импорт». Запись в файл работает в Chrome, Edge, Яндекс и Opera.')}</p>`;
     if (DISK.state === 'needs') return '<p class="note">Браузер перезапускался и снова просит разрешение на запись в файл. Нажмите «Продолжить запись» — один раз за запуск браузера.</p>';
-    return `<p class="note store">${ico('vault')}Круги хранятся только в этом браузере. ${q('«Хранить в файле на диске» записывает статистику ещё и в JSON-файл после каждого изменения, так она переживёт очистку браузера. Работает в Chrome, Edge, Яндекс и Opera. После перезапуска браузера нужно один раз нажать «Продолжить запись».')}</p>`;
+    return `<p class="note store">${ico('vault')}Забеги хранятся только в этом браузере. ${q('«Хранить в файле на диске» записывает статистику ещё и в JSON-файл после каждого изменения, так она переживёт очистку браузера. Работает в Chrome, Edge, Яндекс и Opera. После перезапуска браузера нужно один раз нажать «Продолжить запись».')}</p>`;
   }
   function diskControls() {
-    const reset = S.ui.resetArm ? '<button class="linkish danger" data-act="resetStats">Точно сбросить?</button>' : '<button class="linkish" data-act="resetStats" data-tip="Удаляет историю кругов и всё, чему помощник научился по вашим вводам: шансы дверей и замен, частоту «!», инструменты. Петы, компас и цены остаются. Полезно после тестовых кругов.">Сбросить</button>';
-    const io = reset + '<button class="linkish" data-act="export" data-tip="Скачать копию статистики в JSON-файл">Экспорт</button><button class="linkish" data-act="import" data-tip="Добавить круги и счётчики из файла статистики">Импорт</button>';
+    const reset = S.ui.resetArm ? '<button class="linkish danger" data-act="resetStats">Точно сбросить?</button>' : '<button class="linkish" data-act="resetStats" data-tip="Удаляет историю забегов и всё, чему помощник научился по вашим вводам: шансы дверей и замен, частоту «!», инструменты. Петы, компас и цены остаются. Полезно после тестовых забегов.">Сбросить</button>';
+    const io = '<span class="sec-links"><button class="linkish" data-act="export" data-tip="Скачать копию статистики в JSON-файл">Экспорт</button><button class="linkish" data-act="import" data-tip="Добавить забеги и счётчики из файла статистики">Импорт</button>' + reset + '</span>';
     if (DISK.state === 'linked') return `<span class="disk ok" data-tip="Каждое изменение статистики сразу записывается в этот файл на диске">${ico('check')}${DISK.handle.name}</span>${io}`;
     if (DISK.state === 'needs') return `<button class="btn small" data-act="diskGrant" data-tip="Браузер просит разрешение после перезапуска">${ico('vault')}Продолжить запись в ${DISK.handle.name}</button>${io}`;
     if (DISK.state === 'none') return `<button class="btn small" data-act="diskLink" data-tip="Статистика будет сразу записываться в выбранный JSON-файл на диске. Так она переживёт очистку браузера и переезд.">${ico('vault')}Хранить в файле на диске</button>${io}`;
@@ -1917,7 +1918,7 @@ self.onmessage = function (e) {
     if (P.qty) out.push(`+${pct(P.qty[r])} к количеству добычи`);
     if (P.dup) out.push(`каждый предмет из сундука с шансом ${pct(P.dup[r])} копируется`);
     if (x.reopen) out.push(`${pct(x.reopen, x.reopen < 0.01 ? 1 : 0)} шанс открыть сундук ещё раз`);
-    if (P.refresh) { const f = P.refresh[r]; if (f >= 1) out.push('1 обновление инструментов за круг'); else if (f > 0) out.push('обновление инструментов с шансом 50%'); }
+    if (P.refresh) { const f = P.refresh[r]; if (f >= 1) out.push('1 обновление инструментов за забег'); else if (f > 0) out.push('обновление инструментов с шансом 50%'); }
     return out.join(' · ');
   }
 
@@ -2241,11 +2242,11 @@ self.onmessage = function (e) {
     const pi = petInfo();
     const set = S.settings;
     const stats = LAB.goalStats || {};
-    const resume = S.run && S.run.s ? `<div class="resume fade-in"><span>${ico('lantern')}</span><div class="txt"><b>Незавершённый круг: день ${S.run.s.day}</b><span>Радуг в хранилище: ${S.run.s.vault} · узников на доске: ${C.crowd(S.run.s)}</span></div><button class="btn small primary" data-act="resume">Вернуться к доске</button></div>` : '';
+    const resume = S.run && S.run.s ? `<div class="resume fade-in"><span>${ico('lantern')}</span><div class="txt"><b>Незавершённый забег: день ${S.run.s.day}</b><span>Радуг в хранилище: ${S.run.s.vault} · узников на доске: ${C.crowd(S.run.s)}</span></div><button class="btn small primary" data-act="resume">Вернуться к доске</button></div>` : '';
     const fit = chestValues();
     const goalCards = GOALS.filter((g) => g.id !== 'custom' && (g.id !== 'mine' || fit)).map((g) => {
       const gs = stats[g.id];
-      const stat = gs ? `<div class="g-stats"><span data-tip="Сколько радужных сундуков в среднем за круг">Радужных <em>${fmt(gs.rainbows, 2)}</em></span><span data-tip="Сколько всего сундуков открывается после бунта, всех цветов">Всего сундуков <em>${fmt(gs.inmates + gs.rainbows, 1)}</em></span><span data-tip="Шанс, что за круг будет хотя бы один радужный">Хотя бы 1 радуга <em>${pct(gs.pRb)}</em></span></div>`
+      const stat = gs ? `<div class="g-stats"><span data-tip="Сколько радужных сундуков в среднем за забег">Радужных <em>${fmt(gs.rainbows, 2)}</em></span><span data-tip="Сколько всего сундуков открывается после бунта, всех цветов">Всего сундуков <em>${fmt(gs.inmates + gs.rainbows, 1)}</em></span><span data-tip="Шанс, что за забег будет хотя бы один радужный">Хотя бы 1 радуга <em>${pct(gs.pRb)}</em></span></div>`
         : g.id === 'mine' ? `<div class="g-stats"><span>Каждая редкость дороже ×${fmt(fit.r, 2)}. FE за сундук:</span>${TIERS.map((t, i) => `<span data-tip="${t.n}"><i class="dot" style="background:${i === 5 ? 'var(--r5)' : t.c}"></i><em>${fmt(fit.v[i], 0)}</em></span>`).join('')}</div>` : '';
       const rec = g.id === 'value' ? `<span class="rec" data-tip="Рекомендуем: почти столько же радуг, сколько у охоты за ними, и больше сундуков">${ico('star')}Рекомендуем</span>` : '';
       return `<button class="goal ${set.goal === g.id ? 'on' : ''} ${g.id === 'value' ? 'is-rec' : ''}" data-goal="${g.id}" aria-pressed="${set.goal === g.id}"><div class="g-top"><span class="g-ico">${ico(g.icon)}</span><b>${g.n}</b>${rec}</div><p>${g.d}</p>${stat}</button>`;
@@ -2264,7 +2265,7 @@ self.onmessage = function (e) {
     const priceIn = (c) => `<input class="price" type="number" min="0" step="1" inputmode="numeric" placeholder="цена, FE" value="${set.compassPrice[c.id] || ''}" data-price="${c.id}" aria-label="Цена ${c.n} в FE">`;
     const bonus = S.ui.bonusOpen ? `<div class="bonus-body fade-in">
       <div class="sub has-note"><h3 class="subh">Петы</h3><div class="pets">${petCard('twin')}${petCard('iris')}${petCard('taro')}</div>
-        <aside class="mnote left">Twin Inquisitors — самый сильный пет для этой механики. Главные ранги: <b>1</b> — копия предметов из сундука (18%), <b>4</b> — обновление выбора инструмента в каждом круге, <b>6</b> — копия 28%.</aside></div>
+        <aside class="mnote left">Twin Inquisitors — самый сильный пет для этой механики. Главные ранги: <b>1</b> — копия предметов из сундука (18%), <b>4</b> — обновление выбора инструмента в каждом забеге, <b>6</b> — копия 28%.</aside></div>
       <div class="sub has-note"><h3 class="subh">Компас</h3>
         <div class="seg">${COMPASS.map((c) => `<div class="segi ${set.compass === c.id ? 'on' : ''}"><button data-compass="${c.id}"><b>${c.n}</b><span>${c.d}</span></button>${c.id === 'none' ? '' : priceIn(c)}</div>`).join('')}</div>
         <div id="verdict">${compassVerdict()}</div>
@@ -2279,7 +2280,7 @@ self.onmessage = function (e) {
       <section class="sec has-note"><div class="sec-h"><h2>Что собираем?</h2><span>От цели зависит каждый совет. Сменить можно в любой момент, и на доске тоже.</span></div><div class="goals">${goalCards}${customRow}</div>${colors}
         <aside class="mnote right">Петы и компас умножают добычу всех сундуков одинаково, поэтому стратегию от них менять не нужно.</aside></section>
       <section class="sec group"><button class="bonus-toggle" data-act="bonus" aria-expanded="${S.ui.bonusOpen}">${ico('compass')}<span class="sum">${bonusSum} · ${set.stage}</span><span class="mult num" data-tip="Во сколько раз больше добычи из каждого сундука с петами и компасом">×${fmt(pi.mult, 2)}</span>${ico('arrow', 'chev')}</button>${bonus}</section>
-      <div class="cta-row"><button class="btn primary" data-act="start">${S.run ? 'Новый круг' : 'Начать день 1'} ${ico('arrow')}</button><button class="linkish" data-act="mid">Ввести доску с середины круга</button></div>
+      <div class="cta-row"><button class="btn primary" data-act="start">${S.run ? 'Новый забег' : 'Начать день 1'} ${ico('arrow')}</button><button class="linkish" data-act="mid">Ввести доску с середины забега</button></div>
       ${historyBlock()}
     </div>`;
     if (el.firstElementChild) morphHtml(el, html); else el.innerHTML = html;
@@ -2306,14 +2307,14 @@ self.onmessage = function (e) {
       let body;
       if (plain && with_) {
         const net = with_.mean - price - plain.mean;
-        body = `по вашим кругам: без компаса <b class="num">${fmt(plain.mean, 0)} FE</b>, с ним <b class="num">${fmt(with_.mean, 0)} − ${fmt(price, 0)} = ${fmt(with_.mean - price, 0)} FE</b>. ${net >= 0 ? `Выгоднее с компасом: +${fmt(net, 0)} FE за круг.` : `Выгоднее без компаса: +${fmt(-net, 0)} FE за круг.`}`;
+        body = `по вашим забегам: без компаса <b class="num">${fmt(plain.mean, 0)} FE</b>, с ним <b class="num">${fmt(with_.mean, 0)} − ${fmt(price, 0)} = ${fmt(with_.mean - price, 0)} FE</b>. ${net >= 0 ? `Выгоднее с компасом: +${fmt(net, 0)} FE за забег.` : `Выгоднее без компаса: +${fmt(-net, 0)} FE за забег.`}`;
       } else if (base) {
         const withQ = base.mean * (1 + c.q), net = withQ - price - base.mean;
-        body = `оценка: без компаса около <b class="num">${fmt(base.mean, 0)} FE</b> за круг, с ним <b class="num">${fmt(withQ, 0)} − ${fmt(price, 0)} = ${fmt(withQ - price, 0)} FE</b>. ${net >= 0 ? `Выгоднее с компасом: +${fmt(net, 0)} FE.` : `Выгоднее без компаса: +${fmt(-net, 0)} FE.`} ${q(`Добыча без компаса здесь пересчитана из ваших ${base.n} ${plural(base.n, 'круга', 'кругов', 'кругов')} на ${set.stage} делением на бонус компаса. Это приблизительно: Mercury и Redgold ещё и делают бунт тяжелее. После 3 кругов с этим компасом и 3 без него помощник сравнит то, что выпало на самом деле.`)}`;
-      } else body = `выгоден, если сундуки бунта без компаса дают больше <b class="num">${fmt(price / c.q, 0)} FE</b> за круг (цена / ${pct(c.q)}).`;
+        body = `оценка: без компаса около <b class="num">${fmt(base.mean, 0)} FE</b> за забег, с ним <b class="num">${fmt(withQ, 0)} − ${fmt(price, 0)} = ${fmt(withQ - price, 0)} FE</b>. ${net >= 0 ? `Выгоднее с компасом: +${fmt(net, 0)} FE.` : `Выгоднее без компаса: +${fmt(-net, 0)} FE.`} ${q(`Добыча без компаса здесь пересчитана из ваших ${base.n} ${plural(base.n, 'забега', 'забегов', 'забегов')} на ${set.stage} делением на бонус компаса. Это приблизительно: Mercury и Redgold ещё и делают бунт тяжелее. После 3 забегов с этим компасом и 3 без него помощник сравнит то, что выпало на самом деле.`)}`;
+      } else body = `выгоден, если сундуки бунта без компаса дают больше <b class="num">${fmt(price / c.q, 0)} FE</b> за забег (цена / ${pct(c.q)}).`;
       return `<li><b>${c.n}</b>: ${body}</li>`;
     }).filter(Boolean);
-    if (!lines.length) return '<p class="note">Введите цену компаса, и помощник посчитает, окупается ли он. Пока у вас мало кругов, это оценка по +% к добыче. После 3 кругов с компасом и 3 без него на этом этапе он сравнит то, что у вас выпало на самом деле.</p>';
+    if (!lines.length) return '<p class="note">Введите цену компаса, и помощник посчитает, окупается ли он. Пока у вас мало забегов, это оценка по +% к добыче. После 3 забегов с компасом и 3 без него на этом этапе он сравнит то, что у вас выпало на самом деле.</p>';
     return `<ul class="verdict">${lines.join('')}</ul>`;
   }
   // FE a chest of each rarity brings at ×1 loot, fitted to the player's logged runs (FE / loot multiplier).
@@ -2649,7 +2650,7 @@ self.onmessage = function (e) {
     const others = a.stats.filter((x) => x !== best).map((x) => ({ x, g: pairedGap(best.samples, x.samples) })).sort((p1, p2) => p1.g.m - p2.g.m);
     const o = others[0], unit = unitName();
     const close = o.g.m <= 2 * o.g.se;
-    return `<p class="why-num">${a.runs} прогонов до конца круга. Против «${actionLabel(o.x.action)}»: ${close ? `почти поровну (${o.g.m >= 0 ? '+' : '−'}${fmt(Math.abs(o.g.m), 2)} ± ${fmt(2 * o.g.se, 2)} ${unit}), можно выбрать любой` : `+${fmt(o.g.m, 2)} ${unit} в среднем, разница надёжная`}.</p>`;
+    return `<p class="why-num">${a.runs} прогонов до конца забега. Против «${actionLabel(o.x.action)}»: ${close ? `почти поровну (${o.g.m >= 0 ? '+' : '−'}${fmt(Math.abs(o.g.m), 2)} ± ${fmt(2 * o.g.se, 2)} ${unit}), можно выбрать любой` : `+${fmt(o.g.m, 2)} ${unit} в среднем, разница надёжная`}.</p>`;
   }
   const unitName = () => (S.settings.goal === 'rainbow' ? 'радуги' : 'очка ценности');
   function whyHtml() {
@@ -2680,14 +2681,14 @@ self.onmessage = function (e) {
       } else if (rec.type === 'swap') {
         const who = `${BEASTS[here.b].n.toLowerCase()}, ${TIERS[here.t].n.toLowerCase()}`;
         if (here.tusk) t = `<p>На клетке ${pad(s.pos)} бивень: замена узника здесь поднимает на ранг четырёх узников доски. Это выгоднее, чем держать самого узника (${who}).</p>`;
-        else if (here.t <= 1) t = `<p>Узник в ${pad(s.pos)} (${who}) почти ничего не стоит, а замена даёт случайного узника заново${C.has(s, 'rope') ? ' — с Hangman\'s Noose только Редкого или Легендарного' : ''}. Частые замены слабых узников — основа сильной игры: если не менять Магических, радуг за круг становится примерно на 40% меньше.</p>`;
-        else t = `<p>Узник в ${pad(s.pos)} (${who}) сам по себе дороже средней замены. Но прогоны до конца круга по вашей доске надёжно показали, что здесь замена выгоднее: важнее, кого новый узник сможет съесть и кому станет едой.</p>`;
+        else if (here.t <= 1) t = `<p>Узник в ${pad(s.pos)} (${who}) почти ничего не стоит, а замена даёт случайного узника заново${C.has(s, 'rope') ? ' — с Hangman\'s Noose только Редкого или Легендарного' : ''}. Частые замены слабых узников — основа сильной игры: если не менять Магических, радуг за забег становится примерно на 40% меньше.</p>`;
+        else t = `<p>Узник в ${pad(s.pos)} (${who}) сам по себе дороже средней замены. Но прогоны до конца забега по вашей доске надёжно показали, что здесь замена выгоднее: важнее, кого новый узник сможет съесть и кому станет едой.</p>`;
       } else t = '<p>Выгодного укуса нет, а узник под надзирателем уже достаточно ценный, чтобы его не менять. Завтра будут новые двери.</p>';
       return t + rolloutLine();
     }
     if (step === 'event') return '<p>Цепная реакция почти всегда выгодна. Казнь выгодна, если палач растёт больше, чем стоят убранные узники.</p>' + rolloutLine();
-    if (step === 'tool') return '<p>Инструмент даёт первый Высший узник за круг. Ранг инструмента (S–D) показывает, насколько он поднимает итог круга для вашей цели. Подробнее — в вики, раздел «Инструменты».</p>';
-    if (step === 'gift') return '<p>Каждая радуга открывает дар хранилища. Дары можно брать повторно; помощник сравнивает все четыре прогонами по вашей текущей доске, поэтому совет может меняться от круга к кругу.</p>' + rolloutLine();
+    if (step === 'tool') return '<p>Инструмент даёт первый Высший узник за забег. Ранг инструмента (S–D) показывает, насколько он поднимает итог забега для вашей цели. Подробнее — в вики, раздел «Инструменты».</p>';
+    if (step === 'gift') return '<p>Каждая радуга открывает дар хранилища. Дары можно брать повторно; помощник сравнивает все четыре прогонами по вашей текущей доске, поэтому совет может меняться от забега к забегу.</p>' + rolloutLine();
     if (step === 'devour') return '<p>В игре видно, кем стал узник: его редкость и вид. Отметьте это, и помощник продолжит.</p>';
     if (step === 'edit') return '<p>Расставьте всё как в игре: день, узников, метки, инструменты и радуги в хранилище. Сундуки отдельно считать не нужно: на бунте каждый узник даёт сундук своей редкости.</p>';
     return '';
@@ -2742,7 +2743,7 @@ self.onmessage = function (e) {
       const top = ch.find((x) => x.action.id === best);
       const stable = ch.slice().sort((p1, p2) => q10(p2.samples) - q10(p1.samples))[0];
       if (top && stable && stable !== top && stable.mean >= 0.9 * top.mean) {
-        out.push(`Стабильнее: ${TOOLS[stable.action.id].n}. В среднем на ${pct(1 - stable.mean / top.mean)} меньше, зато слабые круги с ним лучше (10% худших: ${fmt(q10(stable.samples), 1)} против ${fmt(q10(top.samples), 1)}).`);
+        out.push(`Стабильнее: ${TOOLS[stable.action.id].n}. В среднем на ${pct(1 - stable.mean / top.mean)} меньше, зато слабые забеги с ним лучше (10% худших: ${fmt(q10(stable.samples), 1)} против ${fmt(q10(top.samples), 1)}).`);
       }
     }
     return out.length ? `<div class="toolnotes">${out.map((x) => `<p>${x}</p>`).join('')}</div>` : '';
@@ -2786,19 +2787,19 @@ self.onmessage = function (e) {
   }
   function histSummary(hist) {
     const avg = (f, rows) => rows.reduce((a, x) => a + f(x), 0) / Math.max(1, rows.length);
-    const parts = [`${hist.length} ${plural(hist.length, 'круг', 'круга', 'кругов')}`, `в среднем ${fmt(avg((x) => x.rb, hist), 2)} радуги и ${fmt(avg((x) => x.ch, hist), 1)} сундука`];
+    const parts = [`${hist.length} ${plural(hist.length, 'забег', 'забега', 'забегов')}`, `в среднем ${fmt(avg((x) => x.rb, hist), 2)} радуги и ${fmt(avg((x) => x.ch, hist), 1)} сундука`];
     const fe = hist.filter((x) => x.fe > 0 && !x.lucky);
-    if (fe.length) parts.push(`${fmt(avg((x) => x.fe, fe), 0)} FE за круг`);
+    if (fe.length) parts.push(`${fmt(avg((x) => x.fe, fe), 0)} FE за забег`);
     return parts.join(' · ');
   }
   function historyBlock() {
     const hist = S.settings.history || [];
-    const head = (summary) => `<div class="sec-h"><h2>Ваши круги</h2><span>${summary}</span><div class="sec-act">${diskControls()}</div></div>${diskNote()}`;
+    const head = (summary) => `<div class="sec-h"><h2>Ваши забеги</h2><span>${summary}</span><div class="sec-act">${diskControls()}</div></div>${diskNote()}`;
     if (!hist.length) return `<section class="sec group fade-in">${head('После бунта запишите добычу: здесь появятся средние по этапам и выгода компаса.')}</section>`;
     const stages = STAGES.filter((x) => hist.some((h) => h.stage === x));
-    const byStage = stages.length > 1 ? `<div class="tbl-wrap"><table class="wt"><tr><th>Этап</th><th class="r">Кругов</th><th class="r">Радуг</th><th class="r">FE за круг</th></tr>${stages.map((x) => { const rows = hist.filter((h) => h.stage === x), fe = rows.filter((h) => h.fe > 0 && !h.lucky); return `<tr><td>${x}</td><td class="r num">${rows.length}</td><td class="r num">${fmt(rows.reduce((acc, h) => acc + h.rb, 0) / rows.length, 2)}</td><td class="r num">${fe.length ? fmt(fe.reduce((acc, h) => acc + h.fe, 0) / fe.length, 0) : '—'}</td></tr>`; }).join('')}</table></div>` : '';
-    const more = hist.length > HIST_SHOW ? `<p class="note">Последние ${HIST_SHOW} из ${hist.length}. Средние и таблица по этапам — по всем кругам.</p>` : '';
-    return `<section class="sec group fade-in">${head(`${histSummary(hist)} ${q('Наведите на столбик: он раскрасится по цветам сундуков. Круги со сверхредким дропом отмечены точкой и не входят в средние.')}`)}<div class="hist">${histBars(hist.slice(-HIST_SHOW))}</div>${more}${byStage}</section>`;
+    const byStage = stages.length > 1 ? `<div class="tbl-wrap"><table class="wt"><tr><th>Этап</th><th class="r">Забегов</th><th class="r">Радуг</th><th class="r">FE за забег</th></tr>${stages.map((x) => { const rows = hist.filter((h) => h.stage === x), fe = rows.filter((h) => h.fe > 0 && !h.lucky); return `<tr><td>${x}</td><td class="r num">${rows.length}</td><td class="r num">${fmt(rows.reduce((acc, h) => acc + h.rb, 0) / rows.length, 2)}</td><td class="r num">${fe.length ? fmt(fe.reduce((acc, h) => acc + h.fe, 0) / fe.length, 0) : '—'}</td></tr>`; }).join('')}</table></div>` : '';
+    const more = hist.length > HIST_SHOW ? `<p class="note">Последние ${HIST_SHOW} из ${hist.length}. Средние и таблица по этапам — по всем забегам.</p>` : '';
+    return `<section class="sec group fade-in">${head(`${histSummary(hist)} ${q('Наведите на столбик: он раскрасится по цветам сундуков. Забеги со сверхредким дропом отмечены точкой и не входят в средние.')}`)}<div class="hist">${histBars(hist.slice(-HIST_SHOW))}</div>${more}${byStage}</section>`;
   }
   function renderMiniHist() {
     const el = $('#minihist'); if (!el) return;
@@ -2811,7 +2812,7 @@ self.onmessage = function (e) {
     const max = Math.max(1, ...counts);
     const bars = counts.map((k, t) => `<div style="--c:${t === 5 ? 'var(--r5)' : TIERS[t].c};height:${14 + (k / max) * 42}px;background:${t === 5 ? 'var(--r5-line)' : TIERS[t].c}" data-tip="${TIERS[t].n}: ${k}">${k}</div>`).join('');
     setYard('end', `<div class="summary"><div class="head"><h3>Бунт: ${nSum(counts)} сундуков</h3><div class="sub">Радужных: ${counts[5]} · добыча ×${fmt(petInfo().mult, 2)} с петами и компасом</div></div><div class="bars">${bars}</div>
-      <div class="logform"><label class="lf"><span>Добыча, FE</span><input type="number" min="0" step="1" inputmode="numeric" data-log="fe" value="${e.fe || ''}" placeholder="необязательно"></label>${q('Сколько FE принесли сундуки бунта. Необязательно: по этим записям считаются средняя добыча по этапам, выгода компаса и цена сундука каждой редкости.')}<span class="lf-sep"></span><button class="switch ${e.lucky ? 'on' : ''}" data-act="logLucky"><i></i>Сверхредкий дроп</button>${q('Отметьте, если выпала очень редкая валюта или дорогой уникальный предмет, который бывает раз в много кругов. Круг останется в истории, но не исказит средние.')}</div><button class="btn small primary" data-act="newRun">Новый круг ${ico('arrow')}</button></div>`);
+      <div class="logform"><label class="lf"><span>Добыча, FE</span><input type="number" min="0" step="1" inputmode="numeric" data-log="fe" value="${e.fe || ''}" placeholder="необязательно"></label>${q('Сколько FE принесли сундуки бунта. Необязательно: по этим записям считаются средняя добыча по этапам, выгода компаса и цена сундука каждой редкости.')}<span class="lf-sep"></span><button class="switch ${e.lucky ? 'on' : ''}" data-act="logLucky"><i></i>Сверхредкий дроп</button>${q('Отметьте, если выпала очень редкая валюта или дорогой уникальный предмет, который бывает раз в много забегов. Забег останется в истории, но не исказит средние.')}</div><button class="btn small primary" data-act="newRun">Новый забег ${ico('arrow')}</button></div>`);
     void s;
   }
   function renderEdit() {
@@ -2900,9 +2901,9 @@ self.onmessage = function (e) {
         const val = !x ? '…' : best ? 'лучший' : sig ? `−${fmt(gap.m, dg)}` : '≈';
         const total = x ? (rbUnit ? `${fmt(x.rainbows + s.vault, 2)} радуги` : `${fmt(x.value, 1)} очка ценности`) : '';
         const tipText = !x ? 'Считаю…' : best
-          ? `Рекомендуемый ход. К концу круга в среднем ${total}, шанс новой радуги ${pct(x.pRainbow)}.`
-          : sig ? `Хуже рекомендуемого в среднем на ${fmt(gap.m, dg)} ${unit}. К концу круга ${total}, новая радуга ${pct(x.pRainbow)}.`
-            : `Почти так же хорошо: разница ${fmt(Math.abs(gap.m), dg)} ± ${fmt(2 * gap.se, dg)} в пределах случайности, можно выбрать и его. К концу круга ${total}, новая радуга ${pct(x.pRainbow)}.`;
+          ? `Рекомендуемый ход. К концу забега в среднем ${total}, шанс новой радуги ${pct(x.pRainbow)}.`
+          : sig ? `Хуже рекомендуемого в среднем на ${fmt(gap.m, dg)} ${unit}. К концу забега ${total}, новая радуга ${pct(x.pRainbow)}.`
+            : `Почти так же хорошо: разница ${fmt(Math.abs(gap.m), dg)} ± ${fmt(2 * gap.se, dg)} в пределах случайности, можно выбрать и его. К концу забега ${total}, новая радуга ${pct(x.pRainbow)}.`;
         return `<div class="row ${best ? 'best' : ''}" data-hl="${c.cell === undefined ? '' : c.cell}" data-tip="${tipText}"><div class="rname">${ico(actionIcon(c))}<span>${actionLabel(c)}</span></div><div class="rv num">${val}</div><div class="track"><i style="width:${w}%"></i></div></div>`;
       }).join('');
       const g = gambleOf();
@@ -2943,7 +2944,7 @@ self.onmessage = function (e) {
     let body = '';
     if (step === 'doors' || step === 'go' || step === 'reveal') {
       const c = totalCal(), n = nSum(c.doors);
-      const src = n ? `Уточнено по ${n} ${plural(n, 'вашей двери', 'вашим дверям', 'вашим дверям')}.` : 'Пока это оценка по симулятору: помощник уточнит её по вашим кругам.';
+      const src = n ? `Уточнено по ${n} ${plural(n, 'вашей двери', 'вашим дверям', 'вашим дверям')}.` : 'Пока это оценка по симулятору: помощник уточнит её по вашим забегам.';
       body += `<div class="odd"><div class="ot"><span>Кто за дверью ${q(`Редкость нового узника за закрытой дверью.${C.has(s, 'hook') ? ' С Sorting Hook Обычных не бывает.' : ''} Вид — мамонт, лев, волк или крыса — всегда случаен, у всех четырёх равные шансы. ${src}`)}</span></div>${stackBar(doorDist(s))}</div>`;
       if (step === 'go') {
         const p = mealChance(s, doorDist(s), -1);
@@ -2992,7 +2993,7 @@ self.onmessage = function (e) {
       <div class="b-head"><b>Стратегия</b><button class="ghost icon-only" data-act="bubbleClose" aria-label="Свернуть">${ico('close')}</button></div>
       <div class="glist">${GOALS.filter((x) => x.id !== 'mine' || chestValues()).map((x) => `<button class="${x.id === S.settings.goal ? 'on' : ''}" data-goal="${x.id}" data-tip="${x.who}">${ico(x.icon)}${x.n}</button>`).join('')}</div>
       ${S.settings.goal === 'custom' ? `<div class="colors">${TIERS.map((t, i) => `<button class="chip ${S.settings.colors.includes(i) ? 'on' : ''}" data-color="${i}" aria-label="${t.n}"><i class="dot" style="background:${t.c}"></i></button>`).join('')}</div>` : ''}
-      <p class="note">Смена стратегии посреди круга честно пересчитывает ход, но на дистанции лучше держаться одной.</p>
+      <p class="note">Смена стратегии посреди забега честно пересчитывает ход, но на дистанции лучше держаться одной.</p>
       <button class="btn small quiet b-link" data-act="home">${ico('gear')}Петы, компас и статистика</button>`;
     fitBubble();
   }
@@ -3584,14 +3585,14 @@ self.onmessage = function (e) {
             c.stages[k] = { doors: mx(cur.doors, x.doors), swaps: mx(cur.swaps, x.swaps), takes: mx(cur.takes, x.takes), evN: Math.max(cur.evN, +x.evN || 0), evK: Math.max(cur.evK, +x.evK || 0), offers: Math.max(cur.offers, +x.offers || 0), tools, laterDays: (x.laterDays || []).length > cur.laterDays.length ? x.laterDays.slice() : cur.laterDays };
           }
         }
-        persist(); render(); toast(`Загружено кругов: ${S.settings.history.length}`, 'check');
+        persist(); render(); toast(`Загружено забегов: ${S.settings.history.length}`, 'check');
       });
     };
     inp.click();
   }
   function confirmNew() {
     if (!S.run) return newRun();
-    setYard('confirm', '<div class="head"><h3>Начать новый круг?</h3><div class="sub">Текущая доска будет сброшена на день 1.</div></div><div class="acts"><button class="btn primary" data-act="start">Начать заново</button><button class="btn quiet" data-act="cancelNew">Отмена</button></div>');
+    setYard('confirm', '<div class="head"><h3>Начать новый забег?</h3><div class="sub">Текущая доска будет сброшена на день 1.</div></div><div class="acts"><button class="btn primary" data-act="start">Начать заново</button><button class="btn quiet" data-act="cancelNew">Отмена</button></div>');
   }
   document.addEventListener('click', (e) => { const t = e.target.closest('[data-act="cancelNew"]'); if (t) { yardKey = ''; yardHtml = ''; renderYard(); } });
   window.addEventListener('resize', () => { if (S.screen === 'play') drawPath(); });
@@ -3617,13 +3618,13 @@ self.onmessage = function (e) {
     const rows = Object.keys(P.pair).map((k) => { const [x, y] = k.split('|'); return { x, y, all: P.pair[k], syn: P.pair[k] - P.single[x] - P.single[y] }; })
       .filter((r) => r.syn > 0.03).sort((p1, p2) => p2.syn - p1.syn).slice(0, 10);
     if (!rows.length) return '<p class="note">Пар, которые заметно сильнее суммы, моделирование не нашло: инструменты складываются почти независимо.</p>';
-    return `<h3>Связки, которые сильнее суммы</h3><div class="tbl-wrap"><table class="wt"><tr><th>Пара</th><th class="r">Вместе</th><th class="r">Сверх суммы</th></tr>${rows.map((r) => `<tr><td>${TOOLS[r.x].n} + ${TOOLS[r.y].n}</td><td class="r num">${signed(r.all)}</td><td class="r num">${signed(r.syn)}</td></tr>`).join('')}</table></div><p class="note">Оба инструмента с первого дня против круга без инструментов и даров. «Сверх суммы» — сколько пара даёт больше, чем два инструмента по отдельности.</p>`;
+    return `<h3>Связки, которые сильнее суммы</h3><div class="tbl-wrap"><table class="wt"><tr><th>Пара</th><th class="r">Вместе</th><th class="r">Сверх суммы</th></tr>${rows.map((r) => `<tr><td>${TOOLS[r.x].n} + ${TOOLS[r.y].n}</td><td class="r num">${signed(r.all)}</td><td class="r num">${signed(r.syn)}</td></tr>`).join('')}</table></div><p class="note">Оба инструмента с первого дня против забега без инструментов и даров. «Сверх суммы» — сколько пара даёт больше, чем два инструмента по отдельности.</p>`;
   }
   // What was logged on each stage: the player sees whether a stage has enough data of its own.
   function stageTable() {
     const stages = Object.entries(calib().stages).filter(([, x]) => nSum(x.doors) + x.evN + nSum(x.takes) > 0);
     if (!stages.length) return '<p class="note">Записей пока нет: статистика копится отдельно для каждого этапа (T7, T8, Profound, Deep Space).</p>';
-    return `<div class="tbl-wrap"><table class="wt"><tr><th>Этап</th><th class="r">Дверей</th><th class="r">Знак «!»</th><th class="r">Кругов с инструментом</th><th class="r">Инструментов в среднем</th></tr>${stages.map(([k, x]) => { const n = nSum(x.takes); const mean = n ? x.takes.reduce((a, v, i) => a + v * (i + 1), 0) / n : 0; return `<tr><td>${k}</td><td class="r num">${nSum(x.doors)}</td><td class="r num">${x.evN ? pct(x.evK / x.evN) : '—'}</td><td class="r num">${n}</td><td class="r num">${n ? fmt(mean, 1) : '—'}</td></tr>`; }).join('')}</table></div><p class="note">Если на этапе мало данных, помощник опирается на остальные этапы. Этап круга — тот, что выбран в настройках при его начале.</p>`;
+    return `<div class="tbl-wrap"><table class="wt"><tr><th>Этап</th><th class="r">Дверей</th><th class="r">Знак «!»</th><th class="r">Забегов с инструментом</th><th class="r">Инструментов в среднем</th></tr>${stages.map(([k, x]) => { const n = nSum(x.takes); const mean = n ? x.takes.reduce((a, v, i) => a + v * (i + 1), 0) / n : 0; return `<tr><td>${k}</td><td class="r num">${nSum(x.doors)}</td><td class="r num">${x.evN ? pct(x.evK / x.evN) : '—'}</td><td class="r num">${n}</td><td class="r num">${n ? fmt(mean, 1) : '—'}</td></tr>`; }).join('')}</table></div><p class="note">Если на этапе мало данных, помощник опирается на остальные этапы. Этап забега — тот, что выбран в настройках при его начале.</p>`;
   }
   const signed = (x) => `${x >= 0 ? '+' : '−'}${pct(Math.abs(x))}`;
   const WIKI_BODY = {
@@ -3634,9 +3635,9 @@ self.onmessage = function (e) {
       <li><b>Действие.</b> Съесть, заменить или завершить день. Справа видно, насколько каждый вариант лучше, слева — почему.</li>
       <li><b>Итог укуса.</b> Укажите, кем стал узник. Если цепочка однозначно съела кого-то ещё, помощник отметит это сам и спросит только при нескольких вариантах.</li></ul>
       <h3>Свой ход</h3><p>Советы не обязательны. Нажмите любую светящуюся дверь или другое действие: помощник примет ваш выбор и пересчитает дальше. Знак <b>≈</b> справа значит, что вариант почти так же хорош, как лучший.</p>
-      <h3>Начать с середины круга</h3><p>На главном экране нажмите «Ввести доску с середины круга»: помощник по очереди спросит день, расстановку на доске, инструменты и радуги в хранилище. Поправить доску позже можно кнопкой «Править доску». Сундуки вводить не нужно: на бунте каждый узник сам становится сундуком своей редкости.</p><p>В статистику круг попадает только после бунта. Брошенный круг не учитывается, а круг, начатый с середины, не считается в «сколько инструментов за круг»: часть инструментов была взята до ввода.</p>
-      <h3>Если ошиблись</h3><ul><li><b>Отменить</b> под доской возвращает шаг назад (или Ctrl+Z).</li><li><b>Править доску</b> меняет любую клетку, день, надзирателя, инструменты и хранилище.</li><li>Круг сохраняется в этом браузере. Закрыли вкладку — откройте снова, доска на месте.</li></ul>
-      <h3>После бунта</h3><p>Запишите добычу из сундуков в FE. Это необязательно, но так появятся средняя добыча по этапам и честный ответ, окупается ли компас. Сверхредкий дроп отметьте отдельно: круг сохранится, но не исказит средние. Настройки петов и компаса — кнопка «Настройки» вверху, доска при этом не теряется.</p>
+      <h3>Начать с середины забега</h3><p>На главном экране нажмите «Ввести доску с середины забега»: помощник по очереди спросит день, расстановку на доске, инструменты и радуги в хранилище. Поправить доску позже можно кнопкой «Править доску». Сундуки вводить не нужно: на бунте каждый узник сам становится сундуком своей редкости.</p><p>В статистику забег попадает только после бунта. Брошенный забег не учитывается, а забег, начатый с середины, не считается в «сколько инструментов за забег»: часть инструментов была взята до ввода.</p>
+      <h3>Если ошиблись</h3><ul><li><b>Отменить</b> под доской возвращает шаг назад (или Ctrl+Z).</li><li><b>Править доску</b> меняет любую клетку, день, надзирателя, инструменты и хранилище.</li><li>Забег сохраняется в этом браузере. Закрыли вкладку — откройте снова, доска на месте.</li></ul>
+      <h3>После бунта</h3><p>Запишите добычу из сундуков в FE. Это необязательно, но так появятся средняя добыча по этапам и честный ответ, окупается ли компас. Сверхредкий дроп отметьте отдельно: забег сохранится, но не исказит средние. Настройки петов и компаса — кнопка «Настройки» вверху, доска при этом не теряется.</p>
       <h3>Ставка на радугу</h3><p>Иногда справа появляется рискованный вариант: он поднимает шанс радуги ценой небольшой потери в среднем. Помощник предлагает его, только когда ставка окупается на дистанции за счёт дара хранилища и шанса на редкий дроп. Выиграли — порадуемся вместе, проиграли — план всё ещё на месте.</p>`,
     rules: () => `<h2>Правила за минуту</h2><p class="lead">Фаза надзирателя длится 20 дней. Потом узники поднимают бунт, и каждый побеждённый открывает сундук своей редкости. Задача — вырастить к бунту как можно более ценных узников.</p>
       <h3>Кольцо</h3><p>16 клеток по кругу, 01 — офис надзирателя, в нём никто не сидит. Каждое утро игра подсвечивает 3 клетки из 5 ближайших по часовой стрелке. Офис считается шагом, но его не предлагают, поэтому рядом с ним выбор идёт из 4 клеток.</p>
@@ -3644,13 +3645,13 @@ self.onmessage = function (e) {
       <p>Есть можно только узника <b>той же редкости</b>, и начать укус может только узник под надзирателем. После укуса он поднимается на ранг и <b>случайно меняет вид</b> — так в игре, это сказано в официальном анонсе сезона. Если новому виду есть кого съесть на новой редкости, цепочка продолжается сама, остановить её нельзя.</p>
       <p>Чем больше разных зверей стоит на одной редкости, тем дальше идёт цепочка. Если там все четыре вида, она точно не оборвётся.</p>
       <h3>Один раз в день</h3><ul><li><b>Съесть</b>: только узником под надзирателем.</li><li><b>Заменить</b>: узник под надзирателем уходит, на его место приходит случайный новый.</li></ul>
-      <h3>Редкости</h3><p>${[0, 1, 2, 3, 4, 5].map(tierName).join(' → ')}. ${tierName(5)} узник сразу уходит в хранилище и открывает дар. Первый Высший за круг даёт выбор инструмента.</p>
+      <h3>Редкости</h3><p>${[0, 1, 2, 3, 4, 5].map(tierName).join(' → ')}. ${tierName(5)} узник сразу уходит в хранилище и открывает дар. Первый Высший за забег даёт выбор инструмента.</p>
       <h3>События и метки</h3><ul><li><b>Знак «!» на двери</b>: за ней событие тюрьмы. <b>Цепная реакция</b> — следующий патруль откроет все закрытые двери по пути. <b>Казнь</b> — палач убирает тех, кого ест, ниже своей редкости, и растёт на ранг за каждого.</li><li>${MARKS.tusk}</li><li>${MARKS.prey} Похоже, это метка, а не соседство: на единственной известной доске лев и его добыча стояли далеко друг от друга (доска собрана до старта лиги, так что это ещё проверить). Как метка появляется, пока не известно; увидели её утром — нажмите «Утром появилась метка добычи?».</li><li>${MARKS.scratch}</li><li>${MARKS.nest}</li></ul>
-      <p class="note">Шансы за дверью и частота событий в игре официально не опубликованы. Помощник начинает с оценки и уточняет её по вашим кругам — см. «Ваша статистика».</p>`,
+      <p class="note">Шансы за дверью и частота событий в игре официально не опубликованы. Помощник начинает с оценки и уточняет её по вашим забегам — см. «Ваша статистика».</p>`,
     goals: () => `<h2>Стратегии</h2><p class="lead">Стратегия — это то, насколько вам ценен сундук каждой редкости. От неё зависит, когда есть, а когда копить.</p>
       <h3>Главное правило</h3><p>Укус превращает двух узников в одного на ранг выше. Если сундук следующей редкости стоит <b>больше двух</b> текущих, есть выгодно. Если меньше — выгоднее копить количество.</p>
       <div class="tbl-wrap"><table class="wt"><tr><th>Стратегия</th><th>Кому</th><th class="r">Радужных</th><th class="r">Всего сундуков</th><th class="r">Хотя бы 1 радуга</th></tr>${GOALS.filter((g) => g.id !== 'custom').map((g) => { const x = (LAB.goalStats || {})[g.id]; return `<tr><td>${g.n}</td><td>${g.who}</td><td class="r num">${x ? fmt(x.rainbows, 2) : '—'}</td><td class="r num">${x ? fmt(x.inmates + x.rainbows, 1) : '—'}</td><td class="r num">${x ? pct(x.pRb) : '—'}</td></tr>`; }).join('')}</table></div>
-      <p class="note">Средние за 20-дневный круг: инструменты по вашим данным, дар за каждую радугу, без петов. ${S.settings.labCache ? 'Пересчитано по вашим шансам.' : `Заводская оценка: событие «!» за ${LAB.eventChance || 10}% дверей, ${LAB.games ? `${(LAB.games / 1000).toFixed(0)} тыс. кругов на стратегию` : ''}.`}</p>
+      <p class="note">Средние за 20-дневный забег: инструменты по вашим данным, дар за каждую радугу, без петов. ${S.settings.labCache ? 'Пересчитано по вашим шансам.' : `Заводская оценка: событие «!» за ${LAB.eventChance || 10}% дверей, ${LAB.games ? `${(LAB.games / 1000).toFixed(0)} тыс. забегов на стратегию` : ''}.`}</p>
       ${GOALS.map((g) => `<h3>${g.n}</h3><p>${g.d}</p>`).join('')}
       <h3>Что такое «очко ценности»</h3><p>Так «Растить всех» сравнивает ходы: Обычный сундук — 1 очко, Магический — 2, Редкий — 4, Легендарный — 8, Высший — 16, радужный — 48. Каждый ранг вдвое дороже предыдущего, а радуга втрое дороже Высшего, потому что даёт ещё и дар. Это модель для сравнения ходов, а не цена в FE.</p>
       <h3>Петы и компас не меняют стратегию</h3><p>Они умножают добычу всех сундуков одинаково, поэтому лучший ход от них не зависит. Исключение одно — обновление инструментов у Twin Inquisitors с ранга 2: оно учтено автоматически.</p>`,
@@ -3658,8 +3659,8 @@ self.onmessage = function (e) {
       const g = S.settings.goal === 'custom' || S.settings.goal === 'mine' ? 'value' : S.settings.goal;
       const rank = goalParams().toolRank;
       const d = ((LAB.toolDelta || {})[g]) || {};
-      return `<h2>Инструменты</h2><p class="lead">Первый Высший узник за круг даёт выбор из трёх инструментов. Инструмент действует до конца круга, поэтому ранний сильный инструмент стоит очень много.</p>
-      <h3>Ранги для стратегии «${GOALS.find((x) => x.id === S.settings.goal).n}»</h3><p>Прирост — насколько вырастает итог круга, если держать инструмент с первого дня, против круга без инструментов и даров. Ранг S у лучших инструментов, D — почти бесполезные.</p>
+      return `<h2>Инструменты</h2><p class="lead">Первый Высший узник за забег даёт выбор из трёх инструментов. Инструмент действует до конца забега, поэтому ранний сильный инструмент стоит очень много.</p>
+      <h3>Ранги для стратегии «${GOALS.find((x) => x.id === S.settings.goal).n}»</h3><p>Прирост — насколько вырастает итог забега, если держать инструмент с первого дня, против забега без инструментов и даров. Ранг S у лучших инструментов, D — почти бесполезные.</p>
       <div class="tbl-wrap"><table class="wt"><tr><th></th><th>Инструмент</th><th>Что делает</th><th class="r">Прирост</th></tr>${rank.map((t) => `<tr><td>${tierBadge(t)}</td><td>${TOOLS[t].n}</td><td>${TOOLS[t].d}</td><td class="r num">${d[t] !== undefined ? signed(d[t]) : ''}</td></tr>`).join('')}</table></div>
       <h3>Как играть с каждым</h3><ul>${rank.map((t) => `<li><b>${TOOLS[t].n}</b>. ${TOOLS[t].how}</li>`).join('')}</ul>
       <h3>Связки</h3><ul>
@@ -3668,9 +3669,9 @@ self.onmessage = function (e) {
       <li><b>Avenger's Casket + Rusty Saw</b>: обе срабатывают на каждом укусе, поэтому длинные цепочки становятся ещё длиннее.</li>
       <li><b>Fanged Guillotine + крысы</b>: волки подъедают мелких крыс любой редкости ниже своей.</li>
       <li><b>Raging Beast's Agonizing Muzzle</b> лучше взять рано: пока на доске 3 узника или меньше, один укус даёт +3 ранга.</li></ul>
-      <h3>Выбор на вашей доске</h3><p>Ранг — это среднее по многим кругам. Когда вы отметили три предложенных инструмента, помощник доигрывает круг с каждым из них сотни раз <b>с вашей текущей доски</b>. Поэтому инструмент ниже рангом может оказаться лучшим: Iron Tongs of Lust при нескольких мамонтах, Skewered Rat Heads при парах крыс, Agonizing Muzzle на почти пустой доске.</p>
-      <h3>Сколько инструментов за круг</h3><p>Первый даёт цель «King of the Caged» — первый Высший за круг. На досках, собранных до старта лиги, встречались круги с двумя инструментами, но это могли быть тестовые вводы, а откуда приходят следующие, не опубликовано. Помощник не фиксирует их число: он предполагает от 1 до 6 за круг (чаще 2–3) и уточняет это по вашим кругам — сколько инструментов вы взяли и в какие дни. Когда игра предлагает инструмент не за Высшего, нажмите «Игра предложила инструмент» в панели слева.</p>
-      <h3>Как помощник собирает связки</h3><p>Выбирая инструмент, он доигрывает круг с каждым из трёх, и в этих прогонах игра может предложить ещё инструменты — с той частотой, что видна по вашим кругам. Следующий инструмент в прогонах берётся по измеренной силе пары с уже взятыми. Поэтому инструмент, который сам по себе слабее, но с высокой вероятностью соберёт сильную пару, может оказаться лучшим выбором. Под советом видно, с чем выбранный инструмент даёт связку и какой вариант стабильнее.</p>
+      <h3>Выбор на вашей доске</h3><p>Ранг — это среднее по многим забегам. Когда вы отметили три предложенных инструмента, помощник доигрывает забег с каждым из них сотни раз <b>с вашей текущей доски</b>. Поэтому инструмент ниже рангом может оказаться лучшим: Iron Tongs of Lust при нескольких мамонтах, Skewered Rat Heads при парах крыс, Agonizing Muzzle на почти пустой доске.</p>
+      <h3>Сколько инструментов за забег</h3><p>Первый даёт цель «King of the Caged» — первый Высший за забег. На досках, собранных до старта лиги, встречались забеги с двумя инструментами, но это могли быть тестовые вводы, а откуда приходят следующие, не опубликовано. Помощник не фиксирует их число: он предполагает от 1 до 6 за забег (чаще 2–3) и уточняет это по вашим забегам — сколько инструментов вы взяли и в какие дни. Когда игра предлагает инструмент не за Высшего, нажмите «Игра предложила инструмент» в панели слева.</p>
+      <h3>Как помощник собирает связки</h3><p>Выбирая инструмент, он доигрывает забег с каждым из трёх, и в этих прогонах игра может предложить ещё инструменты — с той частотой, что видна по вашим забегам. Следующий инструмент в прогонах берётся по измеренной силе пары с уже взятыми. Поэтому инструмент, который сам по себе слабее, но с высокой вероятностью соберёт сильную пару, может оказаться лучшим выбором. Под советом видно, с чем выбранный инструмент даёт связку и какой вариант стабильнее.</p>
       ${pairsTable()}
       <h3>Обновление предложения</h3><p>Twin Inquisitors с ранга 2 дают обновление инструментов с шансом 50%, с ранга 4 — всегда. Обновление тоже сравнивается прогонами: помощник советует его, если новое случайное предложение в среднем лучше лучшего из трёх.</p>
       <h3>Дары хранилища (за каждую радугу)</h3><ul>${C.GIFT_IDS.map((x) => `<li><b>${GIFTS[x].n}</b>: ${GIFTS[x].d}</li>`).join('')}</ul><p>Дары можно брать повторно. Помощник сравнивает все четыре прогонами по текущей доске, поэтому на разных досках советует разное.</p>
@@ -3681,7 +3682,7 @@ self.onmessage = function (e) {
       const table = (id) => `<div class="tbl-wrap"><table class="wt"><tr><th>Ранг</th><th>Эффект</th><th class="r">Добыча</th></tr>${[1, 2, 3, 4, 5, 6].map((r) => row(id, r)).join('')}</table></div>`;
       return `<h2>Петы и компасы</h2><p class="lead">Они увеличивают добычу из сундуков, но почти не меняют саму мини-игру. «Добыча ×1,30» значит: из каждого сундука в среднем на 30% больше предметов.</p>
       <h3>Twin Inquisitors (легендарный)</h3>${table('twin')}
-      <p>Самые заметные ранги — <b>1</b> (копия предметов 18%), <b>4</b> (обновление инструментов каждый круг) и <b>6</b> (копия 28%). Эффект ранга не складывается с прошлым, а заменяет его: на ранге 6 копия 28%, а не 18% + 28%.</p>
+      <p>Самые заметные ранги — <b>1</b> (копия предметов 18%), <b>4</b> (обновление инструментов каждый забег) и <b>6</b> (копия 28%). Эффект ранга не складывается с прошлым, а заменяет его: на ранге 6 копия 28%, а не 18% + 28%.</p>
       <h3>Heartbloom · Iris (редкий)</h3>${table('iris')}
       <h3>Ripplepop · Taro (магический)</h3>${table('taro')}
       <p class="note">Множитель включает малые узлы пакта: питомцы этой механики открывают их сразу (Twin +12%, Iris +11%, Taro +5% к количеству добычи из сундуков). У Iris и Taro на ранге 1 tlidb не показывает число прибавки к количеству; принято как на ранге 2.</p>
@@ -3695,46 +3696,46 @@ self.onmessage = function (e) {
       const prior = C.norm(d.tierW), nd = nSum(c.doors), ns = nSum(c.swaps);
       const tr = (label, arr, n) => `<tr><td>${label}</td>${[0, 1, 2, 3, 4].map((t) => `<td class="r num">${pct(arr[t], arr[t] < 0.1 ? 1 : 0)}</td>`).join('')}<td class="r num">${n}</td></tr>`;
       const toolRows = Object.entries(c.tools || {}).sort((p1, p2) => p2[1] - p1[1]).map(([id, k]) => `<tr><td>${TOOLS[id] ? TOOLS[id].n : id}</td><td class="r num">${k}</td><td class="r num">${pct(k / Math.max(1, c.offers))}</td></tr>`).join('');
-      return `<h2>Ваша статистика</h2><p class="lead">Помощник учится на ваших кругах. Всё, что вы вводите, он заодно считает: кто вышел из дверей и замен, как часто встречается знак «!», какие инструменты предлагает игра и сколько их бывает за круг.</p>
-      <h3>Почему один круг не ломает шансы</h3><p>Новые данные смешиваются с исходной оценкой так, будто она — это ${CAL_PRIOR.doors} уже виденных дверей. Пока ваших дверей мало, решает оценка; после ${CAL_PRIOR.doors} дверей ваши данные весят половину, после ${CAL_PRIOR.doors * 5} — уже 5/6. Так один «Обычный» не превращается в «100% Обычных».</p>
+      return `<h2>Ваша статистика</h2><p class="lead">Помощник учится на ваших забегах. Всё, что вы вводите, он заодно считает: кто вышел из дверей и замен, как часто встречается знак «!», какие инструменты предлагает игра и сколько их бывает за забег.</p>
+      <h3>Почему один забег не ломает шансы</h3><p>Новые данные смешиваются с исходной оценкой так, будто она — это ${CAL_PRIOR.doors} уже виденных дверей. Пока ваших дверей мало, решает оценка; после ${CAL_PRIOR.doors} дверей ваши данные весят половину, после ${CAL_PRIOR.doors * 5} — уже 5/6. Так один «Обычный» не превращается в «100% Обычных».</p>
       <div class="tbl-wrap"><table class="wt"><tr><th></th><th class="r">Обычный</th><th class="r">Магический</th><th class="r">Редкий</th><th class="r">Легендарный</th><th class="r">Высший</th><th class="r">Ваших</th></tr>
       ${tr('Исходная оценка', prior, '—')}${tr('Дверь сейчас', C.norm(cr.tierW), nd)}${tr('Замена сейчас', C.norm(cr.swapW), ns)}</table></div>
       <p>Знак «!»: ${pct(cr.eventChance / 100, 1)} дверей (ваших патрулей: ${c.evN}, со знаком: ${c.evK}).</p>
-      <h3>Инструментов за круг (этап ${curStage()})</h3><p>${cr.takes.map((p, i) => `${i + 1}: ${pct(p)}`).join(' · ')} — по ${nSum(c.takes || [])} вашим кругам на этом этапе, данным других этапов и исходной оценке.</p>
+      <h3>Инструментов за забег (этап ${curStage()})</h3><p>${cr.takes.map((p, i) => `${i + 1}: ${pct(p)}`).join(' · ')} — по ${nSum(c.takes || [])} вашим забегам на этом этапе, данным других этапов и исходной оценке.</p>
       ${stageTable()}
       ${toolRows ? `<h3>Предложения инструментов: ${c.offers}</h3><p class="note">Чем чаще инструмент предлагают, тем выше его вес в прогонах: так помощник учитывает, что одни инструменты встречаются реже других.</p><div class="tbl-wrap"><table class="wt"><tr><th>Инструмент</th><th class="r">Раз</th><th class="r">В предложениях</th></tr>${toolRows}</table></div>` : ''}
-      <h3>Что подстраивается само</h3><p>Шансы дверей, замен и знака «!» пересчитываются после каждого вашего шага: на них сразу опираются советы, полоска «Кто за дверью» и прогоны. Цифры на карточках стратегий, ранги инструментов и таблица связок пересчитываются в фоне каждые ${RELAB_EVERY} записанных кругов — по вашим шансам дверей, «!» и числу инструментов. ${S.settings.labCache ? `Последний раз: ${new Date(S.settings.labCache.at).toLocaleDateString('ru-RU')}, этап ${S.settings.labCache.stage}.` : 'Пока используются заводские цифры.'} ${relab ? `Сейчас идёт пересчёт: ${relab.total - relab.left} из ${relab.total}.` : ''} Вручную обновлять нужно только сами правила игры, когда их меняет патч.</p>
-      ${(() => { const fit = chestValues(); return fit ? `<h3>Цена сундука по вашим записям</h3><div class="tbl-wrap"><table class="wt"><tr>${TIERS.map((t) => `<th class="r">${t.n}</th>`).join('')}</tr><tr>${fit.v.map((v) => `<td class="r num">${fmt(v, 0)} FE</td>`).join('')}</tr></table></div><p class="note">По ${fit.n} записанным кругам, приведено к добыче без петов и компаса: каждая следующая редкость дороже примерно в ${fmt(fit.r, 2)} раза${fit.freeC ? '' : ', радужный пока оценён как полторы ступени сверху: радужных сундуков в записях меньше трёх'}. Используется стратегией «По моей добыче».</p>` : `<p>После ${FIT_MIN} записанных кругов здесь появится цена сундука каждой редкости в FE по вашей добыче, и откроется стратегия «По моей добыче».</p>`; })()}
-      <h3>Добыча</h3><p>После бунта можно записать добычу из сундуков в FE. Из этого считаются средняя добыча за круг по этапам и окупаемость компаса. Время круга помощник не считает: между кругами бывают перерывы, и честно его не измерить. Сверхредкий дроп хранится в истории, но в средние не входит.</p>
-      <h3>Тестовые круги</h3><p>Если вы кликали наугад, чтобы опробовать помощника, сбросьте статистику («Сбросить» в разделе «Ваши круги»): иначе выдуманные двери и инструменты будут влиять на шансы. Петы, компас и цены не сбрасываются.</p>
-      <h3>Сохранить и перенести</h3><p>Всё хранится в этом браузере. Кнопки «Сохранить в файл» и «Загрузить из файла» в разделе «Ваши круги» на главном экране переносят статистику между браузерами и защищают от очистки данных сайта.</p>`;
+      <h3>Что подстраивается само</h3><p>Шансы дверей, замен и знака «!» пересчитываются после каждого вашего шага: на них сразу опираются советы, полоска «Кто за дверью» и прогоны. Цифры на карточках стратегий, ранги инструментов и таблица связок пересчитываются в фоне каждые ${RELAB_EVERY} записанных забегов — по вашим шансам дверей, «!» и числу инструментов. ${S.settings.labCache ? `Последний раз: ${new Date(S.settings.labCache.at).toLocaleDateString('ru-RU')}, этап ${S.settings.labCache.stage}.` : 'Пока используются заводские цифры.'} ${relab ? `Сейчас идёт пересчёт: ${relab.total - relab.left} из ${relab.total}.` : ''} Вручную обновлять нужно только сами правила игры, когда их меняет патч.</p>
+      ${(() => { const fit = chestValues(); return fit ? `<h3>Цена сундука по вашим записям</h3><div class="tbl-wrap"><table class="wt"><tr>${TIERS.map((t) => `<th class="r">${t.n}</th>`).join('')}</tr><tr>${fit.v.map((v) => `<td class="r num">${fmt(v, 0)} FE</td>`).join('')}</tr></table></div><p class="note">По ${fit.n} записанным забегам, приведено к добыче без петов и компаса: каждая следующая редкость дороже примерно в ${fmt(fit.r, 2)} раза${fit.freeC ? '' : ', радужный пока оценён как полторы ступени сверху: радужных сундуков в записях меньше трёх'}. Используется стратегией «По моей добыче».</p>` : `<p>После ${FIT_MIN} записанных забегов здесь появится цена сундука каждой редкости в FE по вашей добыче, и откроется стратегия «По моей добыче».</p>`; })()}
+      <h3>Добыча</h3><p>После бунта можно записать добычу из сундуков в FE. Из этого считаются средняя добыча за забег по этапам и окупаемость компаса. Время забега помощник не считает: между забегами бывают перерывы, и честно его не измерить. Сверхредкий дроп хранится в истории, но в средние не входит.</p>
+      <h3>Тестовые забеги</h3><p>Если вы кликали наугад, чтобы опробовать помощника, сбросьте статистику («Сбросить» в разделе «Ваши забеги»): иначе выдуманные двери и инструменты будут влиять на шансы. Петы, компас и цены не сбрасываются.</p>
+      <h3>Сохранить и перенести</h3><p>Всё хранится в этом браузере. Кнопки «Сохранить в файл» и «Загрузить из файла» в разделе «Ваши забеги» на главном экране переносят статистику между браузерами и защищают от очистки данных сайта.</p>`;
     },
     finds: () => {
       const gs = LAB.goalStats || {}, be = LAB.breakeven || [], rf = LAB.refresh || {};
       const v = gs.value, rbw = gs.rainbow, m = gs.mass;
       const beRows = be.map((x) => `<tr><td>×${fmt(x.ratio, 1)}</td><td class="r num">${signed(x.gain)}</td><td class="r num">${fmt(x.inmatesDevour, 1)}</td><td class="r num">${fmt(x.inmatesNever, 1)}</td></tr>`).join('');
       const rfLine = (g) => (rf[g] ? `${signed(rf[g][1] / rf[g][0] - 1)} за одно обновление, ${signed(rf[g][2] / rf[g][0] - 1)} за два` : '—');
-      return `<h2>Находки</h2><p class="lead">Что показало моделирование. Каждую гипотезу проверяли на десятках тысяч кругов с одинаковыми случайностями, чтобы сравнение было честным.</p>
-      <h3>1. Меняйте слабых узников</h3><p>Если не менять Магических, радуг за круг становится примерно на 40% меньше. Магический почти ничего не стоит, а замена — это новый шанс на Редкого и выше. Вырастить слабого через цепочки выходит дольше и реже, чем просто заменить.</p>
+      return `<h2>Находки</h2><p class="lead">Что показало моделирование. Каждую гипотезу проверяли на десятках тысяч забегов с одинаковыми случайностями, чтобы сравнение было честным.</p>
+      <h3>1. Меняйте слабых узников</h3><p>Если не менять Магических, радуг за забег становится примерно на 40% меньше. Магический почти ничего не стоит, а замена — это новый шанс на Редкого и выше. Вырастить слабого через цепочки выходит дольше и реже, чем просто заменить.</p>
       <h3>2. Не откладывайте укусы</h3><p>Если копить узников и начинать есть только с 12-го дня, радуг на треть меньше. Стратегии «потерпеть, а потом сорвать куш» здесь нет: дни, когда укус не сделан, просто сгорают.</p>
       <h3>3. Двери: в первый день всё равно, дальше — дальняя</h3><p>В первый день все двери одинаковы, разница меньше 1%. Позже, когда все предложенные двери закрыты, дальняя даёт около +13% радуг: надзиратель быстрее обходит кольцо и чаще встаёт на известных узников.</p>
       <h3>4. События «!» решают много</h3><p>Если события за 2% дверей, а не за 10%, радуг около 18% меньше. Цепная реакция — самое ценное, что может прятаться за дверью. Отмечайте «!»: помощник уточнит, как часто они встречаются у вас.</p>
       <h3>5. Есть стоит, если следующая редкость заметно дороже</h3><p>Укус превращает двух узников в одного. Если сундук на ранг выше стоит меньше чем в ~1,6 раза дороже, лучше почти не есть. При удвоении поедание уже выгодно: цепочки доходят до радуг и даров.</p>
       <div class="tbl-wrap"><table class="wt"><tr><th>Ранг дороже в</th><th class="r">Выигрыш от поедания</th><th class="r">Узников к бунту</th><th class="r">Если не есть</th></tr>${beRows}</table></div>
-      <h3>6. «Растить всех» почти не уступает охоте за радугами</h3><p>«Растить всех» даёт ${v ? fmt(v.rainbows, 2) : '—'} радуги за круг, «Охота за радугами» — ${rbw ? fmt(rbw.rainbows, 2) : '—'}. Разница мала, а сундуков больше. Поэтому она рекомендуется по умолчанию.</p>
+      <h3>6. «Растить всех» почти не уступает охоте за радугами</h3><p>«Растить всех» даёт ${v ? fmt(v.rainbows, 2) : '—'} радуги за забег, «Охота за радугами» — ${rbw ? fmt(rbw.rainbows, 2) : '—'}. Разница мала, а сундуков больше. Поэтому она рекомендуется по умолчанию.</p>
       <h3>7. «Больше сундуков» — отдельная игра</h3><p>Она доводит до бунта ${m ? fmt(m.inmates + m.rainbows, 1) : '—'} сундуков против ${v ? fmt(v.inmates + v.rainbows, 1) : '—'}, но радуг втрое меньше.</p>
       <h3>8. Обновление инструментов у пета</h3><p>Для «Растить всех»: ${rfLine('value')}. Для «Охоты за радугами»: ${rfLine('rainbow')}.</p>
       <h3>9. Iron Tongs of Lust — один из лучших инструментов</h3><p>Если заходить к мамонту с бивнем и менять его, 4 узника растут на ранг. Помощник ведёт к таким мамонтам сам. Если в игре бивень остаётся на клетке после замены, это почти эксплойт: помощник спросит об этом после первой такой замены.</p>
-      <h3>10. Отдельной «взрывной» стратегии нет</h3><p>Шанс собрать 2+ радуги за круг около 15% у любой сильной стратегии, и рискованный режим его не поднимает. Азарт живёт в точечных ставках по ходу круга.</p>`;
+      <h3>10. Отдельной «взрывной» стратегии нет</h3><p>Шанс собрать 2+ радуги за забег около 15% у любой сильной стратегии, и рискованный режим его не поднимает. Азарт живёт в точечных ставках по ходу забега.</p>`;
     },
     math: () => `<h2>Как мы считаем</h2><p class="lead">Короткая версия: точные формулы там, где их можно вывести, и честное моделирование там, где будущее слишком ветвится.</p>
       <h3>Точно, без моделирования</h3><ul>
       <li><b>Итог цепочки укусов</b> — полный перебор дерева вероятностей с запоминанием (динамическое программирование). Вид после каждого укуса равновероятен, цель выбирается случайно среди подходящих.</li>
       <li><b>Шанс увидеть сильный инструмент</b> — комбинаторика: 1 − C(N−k, 3) / C(N, 3) для одного предложения из 3 инструментов, со степенью для обновлений.</li>
       <li><b>Множитель добычи</b> — математическое ожидание: прибавки количества складываются, копия даёт 1 + p предметов, повторное открытие — 1 + p сундуков.</li></ul>
-      <h3>Моделированием (Монте-Карло)</h3><p>Каждый вариант хода доигрывается до конца круга сотни раз. Всё, чего вы не видите — кто за дверями, куда пойдёт цепочка, — каждый раз разыгрывается заново. Дальнейшие ходы делает та же стратегия, что даёт советы.</p>
+      <h3>Моделированием (Монте-Карло)</h3><p>Каждый вариант хода доигрывается до конца забега сотни раз. Всё, чего вы не видите — кто за дверями, куда пойдёт цепочка, — каждый раз разыгрывается заново. Дальнейшие ходы делает та же стратегия, что даёт советы.</p>
       <p>Варианты сравниваются <b>на одинаковых случайностях</b> (метод общих случайных чисел): у всех вариантов одни и те же двери и броски. Поэтому разница между ними видна уже на сотнях прогонов, а не на миллионах. Рядом с разницей помощник показывает её погрешность (два стандартных отклонения): если разница меньше погрешности, варианты равноценны (значок ≈).</p>
-      <h3>Уточнение шансов по вашим кругам</h3><p>Байесовское сглаживание: исходная оценка считается заранее увиденными ${CAL_PRIOR.doors} дверями (распределение Дирихле), ваши наблюдения добавляются к ним. Итоговый шанс — среднее апостериорного распределения. Чем больше ваших данных, тем ближе шансы к вашей игре.</p>
+      <h3>Уточнение шансов по вашим забегам</h3><p>Байесовское сглаживание: исходная оценка считается заранее увиденными ${CAL_PRIOR.doors} дверями (распределение Дирихле), ваши наблюдения добавляются к ним. Итоговый шанс — среднее апостериорного распределения. Чем больше ваших данных, тем ближе шансы к вашей игре.</p>
       <h3>Ставка на радугу</h3><p>Радуга стоит больше своего сундука: дар хранилища и шанс на редкий дроп. Ставка предлагается, когда её цена в среднем меньше половины стоимости радужного сундука, умноженной на прирост шанса радуги, и прирост статистически надёжен.</p>
       <h3>Почему «настоящий» случай</h3><p>Признаков «подкрутки» (псевдослучайности с памятью) в этой механике нет, поэтому каждый бросок считается независимым. Если ваша статистика когда-нибудь заметно разойдётся с оценкой, это будет видно в разделе «Ваша статистика».</p>
       <h3>Что пока допущение</h3><ul><li>Шансы редкости за дверью: стартовая оценка 52 / 27 / 15 / 6% из фанатского симулятора, дальше — ваши данные.</li><li>Событие «!» за 10% дверей: симулятор предполагает 18%, доски, собранные до старта лиги, показывают меньше; надёжных данных пока нет.</li><li>Пищевая цепочка «одна еда на вид», как в видео-анонсе.</li><li>Ценность сундуков по редкости нигде не опубликована: стратегии задают её явно, «Свои цели» позволяют выбрать самому.</li></ul>
