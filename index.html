@@ -283,6 +283,12 @@ button.cell:hover:not(:disabled) { background: var(--s3); }
 .tools-grid button.sel { background: var(--s3); color: var(--tx); box-shadow: inset 0 0 0 2px var(--tx); }
 .tools-grid button.best { box-shadow: inset 0 0 0 2px #e9eef5, 0 0 20px rgba(232, 238, 246, 0.18); color: var(--tx); }
 .tools-grid button:disabled { opacity: 0.25; }
+.toolfoot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; width: min(100%, 460px); }
+.toolfoot .tf-l, .toolfoot .tf-r { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+.toolfoot .tf-r { margin-left: auto; }
+.toolfoot .opt { height: 32px; padding: 0 10px; font-size: var(--fs-xs); color: var(--tx2); }
+.toolfoot .opt svg, .toolfoot .linkish svg { width: 15px; height: 15px; }
+.toolfoot .linkish { display: inline-flex; align-items: center; gap: 6px; }
 .tools-grid button.alt { color: var(--tx); outline: 1px dashed rgba(232, 238, 246, 0.55); outline-offset: -4px; }
 .tpaths { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 8px; width: min(100%, 460px); }
 .tpath { position: relative; display: grid; gap: 4px; align-content: start; padding: 10px 12px 34px; border-radius: 12px; background: var(--s2); text-align: left; transition: background var(--t-fast), box-shadow var(--t-fast); }
@@ -2749,8 +2755,12 @@ self.onmessage = function (e) {
       : `<div class="head"><h3>${canRefresh ? 'Обновите предложение' : `Возьмите ${TOOLS[best].n}`}</h3><div class="sub">${canRefresh ? 'Новое предложение в среднем даст больше, чем лучшее из этих трёх на вашей доске.' : TOOLS[best].d}${measured ? '' : ' <span class="hint">Сверяю с вашей доской…</span>'}</div></div>`;
     const refreshToggle = sub.refreshKnown ? '' : `<button class="switch ${sub.refreshAvail ? 'on' : ''}" data-act="refreshToggle" data-tip="Twin Inquisitors ранга 2–3 дают обновление инструментов с шансом 50%. Отметьте, если в игре есть кнопка обновления."><i></i>Обновление есть</button>`;
     const take = combo ? '' : `<button class="btn small ${canRefresh ? 'quiet' : 'primary'}" data-act="toolTake" data-id="${best}">${ico(best)}Взял</button>`;
-    const btns = `${canRefresh ? '<button class="btn small primary" data-act="toolRefresh">Обновил</button>' : ''}${take}${refreshToggle}`;
-    const acts = sel.length === 3 ? `${combo ? toolPaths(best, combo) : ''}${btns ? `<div class="acts">${btns}</div>` : ''}` : '';
+    // The player may ignore the advice: a refresh and every other offered instrument stay one click away.
+    const btns = `${canRefresh ? '<button class="btn small primary" data-act="toolRefresh">Обновил</button>' : ''}${take}`;
+    const others = sel.filter((t) => t !== best && !(combo && combo.id === t));
+    const quietRefresh = !canRefresh && sub.refreshAvail ? `<button class="linkish" data-act="toolRefresh" data-tip="Если обновили предложение в игре, отметьте это: помощник попросит отметить новые три инструмента.">${ico('restart')}Обновил предложение</button>` : '';
+    const foot = others.length || quietRefresh || refreshToggle ? `<div class="toolfoot"><div class="tf-l">${others.length ? `<span class="hint">Взяли другой:</span>${others.map((t) => `<button class="opt" data-act="toolTake" data-id="${t}">${ico(t)}${TOOLS[t].n}</button>`).join('')}` : ''}</div><div class="tf-r">${quietRefresh}${refreshToggle}</div></div>` : '';
+    const acts = sel.length === 3 ? `${combo ? toolPaths(best, combo) : ''}${btns ? `<div class="acts">${btns}</div>` : ''}${foot}` : '';
     const notes = sel.length === 3 && best ? toolNotes(s, best, measured ? a : null, !!combo) : '';
     // One key while marking (patched in place), a new one only when the advice appears.
     setYard(sel.length === 3 ? 'tool3' : 'tool', `${head0}${acts}${notes}`, grid);
