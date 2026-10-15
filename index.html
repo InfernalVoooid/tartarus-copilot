@@ -142,8 +142,7 @@ svg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-widt
 .chip:hover { background: var(--s2); color: var(--tx); }
 .chip.on { background: var(--s3); color: var(--tx); box-shadow: inset 0 0 0 1px rgba(232, 236, 242, 0.5); }
 .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
-.bonus-toggle { display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px 18px; border-radius: 16px; background: var(--s1); text-align: left; }
-.bonus-toggle:hover { background: var(--s2); }
+.bonus-toggle { display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px 18px; border-radius: 16px; text-align: left; }
 .bonus-toggle .sum { flex: 1; color: var(--tx2); font-size: var(--fs-s); }
 .bonus-toggle .mult { font-weight: 600; }
 .bonus-toggle .chev { transition: transform var(--t-mid) var(--ease); color: var(--tx3); }
@@ -152,11 +151,15 @@ svg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-widt
 .bonus-toggle .b-txt b { font-weight: 500; color: var(--tx); }
 .bonus-toggle .b-txt .sum { flex: none; }
 .bonus-toggle .b-cue { padding: 3px 10px; border-radius: 999px; background: var(--lantern); color: var(--ink); font-size: var(--fs-xs); font-weight: 600; }
-/* Until the player opens it once: a silver lantern rim and a slow sheen, so the section is not taken for a status line. */
-.bonus-toggle.fresh { position: relative; overflow: hidden; border: 1px solid transparent; background: linear-gradient(var(--s1), var(--s1)) padding-box, var(--lantern) border-box; box-shadow: 0 0 28px var(--glow); }
-.bonus-toggle.fresh:hover { background: linear-gradient(var(--s2), var(--s2)) padding-box, var(--lantern) border-box; }
+/* A running silver rim and a slow sheen: players took this row for a status line and skipped the pets. */
+@property --rim { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+@keyframes rim { to { --rim: 360deg; } }
+.bonus-toggle { --fill: var(--s1); position: relative; overflow: hidden; border: 1px solid transparent; box-shadow: 0 0 28px var(--glow);
+  background: linear-gradient(var(--fill), var(--fill)) padding-box, conic-gradient(from var(--rim), #4f5866, #f6f8fb 10%, #9eabbb 22%, #4f5866 36%, #4f5866 50%, #f6f8fb 60%, #9eabbb 72%, #4f5866 86%) border-box;
+  animation: rim 6s linear infinite; }
+.bonus-toggle:hover { --fill: var(--s2); }
 @media (max-width: 520px) { .bonus-toggle .b-cue { display: none; } }
-.bonus-toggle.fresh::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(110deg, transparent 35%, rgba(232, 238, 246, 0.1) 50%, transparent 65%); transform: translateX(-100%); animation: sheen 3.4s var(--ease) 0.8s infinite; }
+.bonus-toggle::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(110deg, transparent 35%, rgba(232, 238, 246, 0.1) 50%, transparent 65%); transform: translateX(-100%); animation: sheen 3.4s var(--ease) 0.8s infinite; }
 .bonus-body { display: grid; gap: 18px; padding: 4px 2px 0; }
 .pets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .pet { display: grid; gap: 10px; padding: 14px; border-radius: 16px; background: var(--s1); align-content: start; }
@@ -543,12 +546,12 @@ button.cell:hover:not(:disabled) { background: var(--s3); }
 
 /* Margin notes: quiet comments beside the block they explain; inline under it when there is no room */
 .has-note { position: relative; }
-.mnote { display: block; font-size: 12.5px; line-height: 1.6; color: color-mix(in srgb, var(--tx2) 72%, var(--tx3)); border-left: 2px solid var(--s3); padding: 2px 0 2px 14px; }
+.mnote { display: block; font-size: 13.5px; line-height: 1.6; color: var(--tx2); border-left: 3px solid rgba(232, 238, 246, 0.42); padding: 2px 0 2px 14px; }
 .mnote b { color: var(--tx); font-weight: 600; }
 @media (min-width: 1400px) {
   .mnote { position: absolute; top: 34px; width: 248px; }
   .mnote.right { left: calc(100% + 30px); }
-  .mnote.left { right: calc(100% + 30px); text-align: right; border-left: 0; border-right: 2px solid var(--s3); padding: 2px 14px 2px 0; }
+  .mnote.left { right: calc(100% + 30px); text-align: right; border-left: 0; border-right: 3px solid rgba(232, 238, 246, 0.42); padding: 2px 14px 2px 0; }
   .sec > .mnote.right { top: 46px; }
 }
 /* Run log under the board: peripheral, so it stays dim and apart until the pointer reaches it. */
@@ -2310,7 +2313,6 @@ self.onmessage = function (e) {
     const p = set.pets;
     const comp = COMPASS.find((c) => c.id === set.compass);
     const bonusSum = [p.twin ? `Twin Inquisitors ${p.twin}` : '', p.iris ? `Iris ${p.iris}` : '', p.taro ? `Taro ${p.taro}` : '', set.compass !== 'none' ? comp.n : ''].filter(Boolean).join(' · ') || 'Без петов и компаса';
-    const fresh = !set.bonusSeen && !S.ui.bonusOpen && !p.twin && !p.iris && !p.taro && set.compass === 'none';
     const pips = (id, r) => `<div class="pips" role="group" aria-label="Ранг">${[0, 1, 2, 3, 4, 5, 6].map((i) => `<button data-petrank="${id},${i}" class="${i === r ? 'cur' : i < r && i > 0 ? 'on' : ''}" aria-label="Ранг ${i}">${i === 0 ? '—' : i}</button>`).join('')}</div>`;
     const petCard = (id) => {
       const P = PETS[id], r = p[id], x = petParts(id, r);
@@ -2333,7 +2335,7 @@ self.onmessage = function (e) {
       ${resume}
       <section class="sec has-note"><div class="sec-h"><h2>Что собираем?</h2><span>От цели зависит каждый совет. Сменить можно в любой момент, и на доске тоже.</span></div><div class="goals">${goalCards}${customRow}</div>${colors}
         <aside class="mnote right">Петы и компас умножают добычу всех сундуков одинаково: оценки на карточках растут вместе, и лучшая стратегия от них не меняется.</aside></section>
-      <section class="sec group"><button class="bonus-toggle ${fresh ? 'fresh' : ''}" data-act="bonus" aria-expanded="${S.ui.bonusOpen}">${ico('compass')}<span class="b-txt"><b>Петы, компас и этап</b><span class="sum">${bonusSum} · ${set.stage}</span></span>${fresh ? '<span class="b-cue">Настроить</span>' : ''}<span class="mult num" data-tip="Во сколько раз больше добычи из каждого сундука с петами и компасом">×${fmt(pi.mult, 2)}</span>${ico('arrow', 'chev')}</button>${bonus}</section>
+      <section class="sec group"><button class="bonus-toggle" data-act="bonus" aria-expanded="${S.ui.bonusOpen}">${ico('compass')}<span class="b-txt"><b>Петы, компас и этап</b><span class="sum">${bonusSum} · ${set.stage}</span></span>${S.ui.bonusOpen ? '' : '<span class="b-cue">Настроить</span>'}<span class="mult num" data-tip="Во сколько раз больше добычи из каждого сундука с петами и компасом">×${fmt(pi.mult, 2)}</span>${ico('arrow', 'chev')}</button>${bonus}</section>
       <div class="cta-row"><button class="btn primary" data-act="start">${S.run ? 'Новый забег' : 'Начать день 1'} ${ico('arrow')}</button><button class="linkish" data-act="mid">Ввести доску с середины забега</button></div>
       ${historyBlock()}
     </div>`;
@@ -3596,7 +3598,7 @@ self.onmessage = function (e) {
       case 'start': return newRun();
       case 'mid': return newRun({ mid: true });
       case 'resume': S.screen = 'play'; S.run.s._rnd = rng; yardKey = ''; sideHtml = ''; render(); analyze(); return;
-      case 'bonus': S.ui.bonusOpen = !S.ui.bonusOpen; if (!S.settings.bonusSeen) { S.settings.bonusSeen = true; persist(); } renderSetup(); return;
+      case 'bonus': S.ui.bonusOpen = !S.ui.bonusOpen; renderSetup(); return;
       case 'newRun': return newRun();
       case 'logLucky': { const e = lastRun(); if (e) { e.lucky = !e.lucky; persist(); renderYard(); renderMiniHist(); } return; }
       case 'whyToggle': S.settings.whyOpen = !S.settings.whyOpen; persist(); { const w = $('#side .why'); if (w) { w.classList.toggle('open', S.settings.whyOpen); w.querySelector('.why-h').setAttribute('aria-expanded', S.settings.whyOpen); sideHtml = $('#side').innerHTML; } } return;
