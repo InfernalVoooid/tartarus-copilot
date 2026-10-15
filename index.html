@@ -81,6 +81,12 @@ svg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-widt
 }
 .ghost:hover { background: var(--s2); color: var(--tx); }
 .ghost.icon-only { width: 36px; padding: 0; justify-content: center; }
+.wiki-btn { height: 40px; padding: 0 14px; font-size: 14px; font-weight: 500; color: var(--tx); }
+.wiki-btn svg.i { width: 22px; height: 22px; }
+/* On the start screen until the first visit: a silver sheen runs over the label, the wiki was easy to miss. */
+.wiki-btn.cue .lbl { background: linear-gradient(100deg, var(--tx2) 40%, #ffffff 50%, var(--tx2) 60%); background-size: 300% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: textSheen 3.2s linear infinite; }
+.wiki-btn.cue svg.i { color: #f6f8fb; }
+@keyframes textSheen { from { background-position: 100% 0; } to { background-position: 0 0; } }
 
 /* Day track */
 .days { display: flex; align-items: center; gap: 12px; color: var(--tx2); font-size: var(--fs-s); }
@@ -546,7 +552,7 @@ button.cell:hover:not(:disabled) { background: var(--s3); }
 
 /* Margin notes: quiet comments beside the block they explain; inline under it when there is no room */
 .has-note { position: relative; }
-.mnote { display: block; font-size: 13.5px; line-height: 1.6; color: var(--tx2); border-left: 3px solid rgba(232, 238, 246, 0.42); padding: 2px 0 2px 14px; }
+.mnote { display: block; font-size: 12.5px; line-height: 1.6; color: var(--tx3); border-left: 3px solid rgba(232, 238, 246, 0.42); padding: 2px 0 2px 14px; }
 .mnote b { color: var(--tx); font-weight: 600; }
 @media (min-width: 1400px) {
   .mnote { position: absolute; top: 34px; width: 248px; }
@@ -680,7 +686,7 @@ button.cell:hover:not(:disabled) { background: var(--s3); }
     <div class="days" id="days" hidden></div>
     <div class="top-right">
       <button class="ghost" data-act="home" id="btn-setup" hidden data-tip="Стратегия, петы, компас и ваша статистика. Доска сохранится."><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.3 3.5h3.4l.5 2.3 1.6.9 2.2-.8 1.7 2.9-1.7 1.6v1.8l1.7 1.6-1.7 2.9-2.2-.8-1.6.9-.5 2.3h-3.4l-.5-2.3-1.6-.9-2.2.8-1.7-2.9 1.7-1.6v-1.8L4.3 8.8 6 5.9l2.2.8 1.6-.9z"/><circle cx="12" cy="12" r="2.6"/></svg><span class="lbl">Настройки</span></button>
-      <button class="ghost" data-act="wiki"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 5.5c2.6-1 5.2-1 7.5.6 2.3-1.6 4.9-1.6 7.5-.6v13c-2.6-1-5.2-1-7.5.6-2.3-1.6-4.9-1.6-7.5-.6z"/><path d="M12 6.1v13"/></svg><span class="lbl">Вики</span></button>
+      <button class="ghost wiki-btn" data-act="wiki"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 5.5c2.6-1 5.2-1 7.5.6 2.3-1.6 4.9-1.6 7.5-.6v13c-2.6-1-5.2-1-7.5.6-2.3-1.6-4.9-1.6-7.5-.6z"/><path d="M12 6.1v13"/></svg><span class="lbl">Вики</span></button>
     </div>
   </header>
   <main id="setup" class="screen"></main>
@@ -2272,6 +2278,7 @@ self.onmessage = function (e) {
     $('#setup').hidden = S.screen !== 'setup';
     $('#play').hidden = S.screen !== 'play';
     $('#btn-setup').hidden = S.screen !== 'play';
+    $('.wiki-btn').classList.toggle('cue', S.screen === 'setup' && !S.settings.wikiSeen);
     if (S.screen === 'setup') renderSetup(); else { renderBoard(); renderYard(); renderRail(); renderSide(); renderMiniHist(); }
     renderBubble();
   }
@@ -3126,14 +3133,31 @@ self.onmessage = function (e) {
       ${S.settings.goal === 'custom' ? `<div class="colors">${TIERS.map((t, i) => `<button class="chip ${S.settings.colors.includes(i) ? 'on' : ''}" data-color="${i}" aria-label="${t.n}"><i class="dot" style="background:${t.c}"></i></button>`).join('')}</div>` : ''}
       <p class="note">Смена стратегии посреди забега честно пересчитывает ход, но на дистанции лучше держаться одной.</p>
       <button class="btn small quiet b-link" data-act="home">${ico('gear')}Петы, компас и статистика</button>`;
-    fitBubble();
+    placeBubble();
   }
 
   // The open bubble is as tall as its content; height can't transition to auto, so it is measured.
   function fitBubble() {
     const b = $('#bubble'); if (!b || !b.classList.contains('open')) return;
     const body = b.querySelector('.b-body');
-    b.style.setProperty('--bh', `${Math.min(body.scrollHeight, window.innerHeight - 120)}px`);
+    const room = b.style.top ? window.innerHeight - parseFloat(b.style.top) - 16 : window.innerHeight - 120;
+    b.style.setProperty('--bh', `${Math.min(body.scrollHeight, room)}px`);
+  }
+  // Players missed the bubble in the screen corner: it sits under the side panel when that is a column (wide screens),
+  // otherwise beside the board's left edge. Phones keep the CSS spot in the top bar.
+  function placeBubble() {
+    const b = $('#bubble');
+    if (!b || b.hidden || window.innerWidth <= 760) { if (b) b.style.left = b.style.top = b.style.bottom = ''; return; }
+    const side = $('#side').getBoundingClientRect(), board = $('#board').getBoundingClientRect();
+    if (window.innerWidth >= 1440 && side.height) {
+      b.style.left = `${side.left}px`;
+      b.style.top = `${Math.min(side.bottom + 14, window.innerHeight - 76)}px`;
+      b.style.bottom = 'auto';
+    } else {
+      b.style.left = `${Math.max(20, board.left - 72)}px`;
+      b.style.top = b.style.bottom = '';
+    }
+    fitBubble();
   }
 
   // ---------- Side panel: why this move, instruments, vault ----------
@@ -3646,7 +3670,7 @@ self.onmessage = function (e) {
       case 'bubbleClose': $('#bubble').classList.remove('open'); return;
       case 'vaultPlus': st().vault++; persist(); renderSide(); analyze(); return;
       case 'vaultMinus': st().vault = Math.max(0, st().vault - 1); persist(); renderSide(); analyze(); return;
-      case 'wiki': openWiki(); return;
+      case 'wiki': if (!S.settings.wikiSeen) { S.settings.wikiSeen = true; persist(); $('.wiki-btn').classList.remove('cue'); } openWiki(); return;
       case 'wikiClose': closeWiki(); return;
       case 'home': if (S.run) persist(); $('#bubble').classList.remove('open'); S.screen = 'setup'; render(); window.scrollTo(0, 0); return;
       default:
@@ -3727,7 +3751,9 @@ self.onmessage = function (e) {
     setYard('confirm', '<div class="head"><h3>Начать новый забег?</h3><div class="sub">Текущая доска будет сброшена на день 1.</div></div><div class="acts"><button class="btn primary" data-act="start">Начать заново</button><button class="btn quiet" data-act="cancelNew">Отмена</button></div>');
   }
   document.addEventListener('click', (e) => { const t = e.target.closest('[data-act="cancelNew"]'); if (t) { yardKey = ''; yardHtml = ''; renderYard(); } });
-  window.addEventListener('resize', () => { if (S.screen === 'play') drawPath(); });
+  window.addEventListener('resize', () => { if (S.screen === 'play') { drawPath(); placeBubble(); } });
+  window.addEventListener('scroll', () => { if (S.screen === 'play') placeBubble(); }, { passive: true });
+  if (window.ResizeObserver) new ResizeObserver(() => { if (S.screen === 'play') placeBubble(); }).observe($('#side'));
 
   // ---------- Wiki ----------
   function openWiki() { $('#overlay').hidden = false; $('#sheet').hidden = false; requestAnimationFrame(() => { $('#overlay').classList.add('show'); $('#sheet').classList.add('show'); }); renderWiki(); }
