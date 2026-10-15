@@ -286,9 +286,12 @@ button.cell:hover:not(:disabled) { background: var(--s3); }
 .toolfoot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; width: min(100%, 460px); }
 .toolfoot .tf-l, .toolfoot .tf-r { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
 .toolfoot .tf-r { margin-left: auto; }
+.toolfoot .tf-l { flex-direction: column; align-items: flex-start; gap: 6px; }
+.toolfoot .tf-opts { display: flex; flex-wrap: wrap; gap: 6px; }
 .toolfoot .opt { height: 32px; padding: 0 10px; font-size: var(--fs-xs); color: var(--tx2); }
 .toolfoot .opt svg, .toolfoot .linkish svg { width: 15px; height: 15px; }
 .toolfoot .linkish { display: inline-flex; align-items: center; gap: 6px; }
+.toolfoot .opt .tag { margin-left: -2px; color: var(--tx3); text-decoration: underline dotted; text-underline-offset: 3px; }
 .tools-grid button.alt { color: var(--tx); outline: 1px dashed rgba(232, 238, 246, 0.55); outline-offset: -4px; }
 .tpaths { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 8px; width: min(100%, 460px); }
 .tpath { position: relative; display: grid; gap: 4px; align-content: start; padding: 10px 12px 34px; border-radius: 12px; background: var(--s2); text-align: left; transition: background var(--t-fast), box-shadow var(--t-fast); }
@@ -2687,7 +2690,7 @@ self.onmessage = function (e) {
     const others = a.stats.filter((x) => x !== best).map((x) => ({ x, g: pairedGap(best.samples, x.samples) })).sort((p1, p2) => p1.g.m - p2.g.m);
     const o = others[0], unit = unitName();
     const close = o.g.m <= 2 * o.g.se;
-    return `<p class="why-num">${a.runs} прогонов до конца забега. Против «${actionLabel(o.x.action)}»: ${close ? `почти поровну (${o.g.m >= 0 ? '+' : '−'}${fmt(Math.abs(o.g.m), 2)} ± ${fmt(2 * o.g.se, 2)} ${unit}), можно выбрать любой` : `+${fmt(o.g.m, 2)} ${unit} в среднем, разница надёжная`}.</p>`;
+    return `<p class="why-num">${a.runs} прогонов до конца забега. ${close ? `С «${actionLabel(o.x.action)}» почти поровну: разница ${fmt(Math.abs(o.g.m), 2)} ${unit} меньше случайного разброса (±${fmt(2 * o.g.se, 2)}), можно выбрать любой` : `Лучше, чем «${actionLabel(o.x.action)}», в среднем на ${fmt(o.g.m, 2)} ${unit}, и это не случайность`}.</p>`;
   }
   const unitName = () => (S.settings.goal === 'rainbow' ? 'радуги' : 'очка ценности');
   function whyHtml() {
@@ -2749,10 +2752,11 @@ self.onmessage = function (e) {
       if (measured && a.rec.type === 'refresh') best = a.stats.filter((x) => x.action.type === 'choose').sort((p1, p2) => p2.mean - p1.mean)[0].action.id;
     }
     const combo = sel.length === 3 && measured && !canRefresh ? comboPick(s, sel, best, a) : null;
+    const why = sel.length === 3 && best ? toolReasons(s, best, sel, measured ? a : null, combo) : null;
     const grid = `<div class="tools-grid">${C.TOOL_IDS.map((t) => `<button data-tool="${t}" class="${sel.includes(t) ? 'sel' : ''} ${best === t ? 'best' : ''} ${combo && combo.id === t ? 'alt' : ''}" ${C.has(s, t) || (sel.length === 3 && !sel.includes(t)) ? 'disabled' : ''} data-tip="${toolTip(t)}" aria-label="${TOOLS[t].n}, ранг ${toolTier(t)}">${ico(t)}</button>`).join('')}</div>`;
     const head0 = sel.length < 3
       ? `<div class="head"><h3>Высший! Выбор инструмента</h3><div class="sub">Отметьте 3 инструмента, которые предложила игра: осталось ${3 - sel.length}. Наведите на инструмент, чтобы прочитать, что он делает.</div></div>`
-      : `<div class="head"><h3>${canRefresh ? 'Обновите предложение' : `Возьмите ${TOOLS[best].n}`}</h3><div class="sub">${canRefresh ? 'Новое предложение в среднем даст больше, чем лучшее из этих трёх на вашей доске.' : TOOLS[best].d}${measured ? '' : ' <span class="hint">Сверяю с вашей доской…</span>'}</div></div>`;
+      : `<div class="head"><h3>${canRefresh ? 'Обновите предложение' : `Возьмите ${TOOLS[best].n}`}</h3><div class="sub">${canRefresh ? 'Новое предложение в среднем даст больше, чем лучшее из этих трёх на вашей доске.' : why.head}${measured ? '' : ' <span class="hint">Сверяю с вашей доской…</span>'}</div></div>`;
     const refreshToggle = sub.refreshKnown ? '' : `<button class="switch ${sub.refreshAvail ? 'on' : ''}" data-act="refreshToggle" data-tip="Twin Inquisitors ранга 2–3 дают обновление инструментов с шансом 50%. Отметьте, если в игре есть кнопка обновления."><i></i>Обновление есть</button>`;
     const take = combo ? '' : `<button class="btn small ${canRefresh ? 'quiet' : 'primary'}" data-act="toolTake" data-id="${best}">${ico(best)}Взял</button>`;
     // The player may ignore the advice: a refresh and every other offered instrument stay one click away.
@@ -2760,9 +2764,9 @@ self.onmessage = function (e) {
     const others = sel.filter((t) => t !== best && !(combo && combo.id === t));
     // Always offered: the pet settings may be unset or wrong, the player's click is the truth.
     const quietRefresh = !canRefresh ? `<button class="linkish" data-act="toolRefresh" data-tip="Если обновили предложение в игре, отметьте это: помощник попросит отметить новые три инструмента.">${ico('restart')}Обновил предложение</button>` : '';
-    const foot = others.length || quietRefresh || refreshToggle ? `<div class="toolfoot"><div class="tf-l">${others.length ? `<span class="hint">Взяли другой:</span>${others.map((t) => `<button class="opt" data-act="toolTake" data-id="${t}">${ico(t)}${TOOLS[t].n}</button>`).join('')}` : ''}</div><div class="tf-r">${quietRefresh}${refreshToggle}</div></div>` : '';
+    const foot = others.length || quietRefresh || refreshToggle ? `<div class="toolfoot"><div class="tf-l">${others.length ? `<span class="hint">Другие варианты</span><div class="tf-opts">${others.map((t) => { const g = why && why.tags[t]; return `<button class="opt" data-act="toolTake" data-id="${t}" data-tip="${g ? `<b>${TOOLS[t].n}</b><br>${g.tip}` : toolTip(t)}">${ico(t)}${TOOLS[t].n}${g ? `<span class="tag">· ${g.k}</span>` : ''}</button>`; }).join('')}</div>` : ''}</div><div class="tf-r">${quietRefresh}${refreshToggle}</div></div>` : '';
     const acts = sel.length === 3 ? `${combo ? toolPaths(best, combo) : ''}${btns ? `<div class="acts">${btns}</div>` : ''}${foot}` : '';
-    const notes = sel.length === 3 && best ? toolNotes(s, best, measured ? a : null, !!combo) : '';
+    const notes = why && why.notes.length ? `<div class="toolnotes">${why.notes.map((x) => `<p>${x}</p>`).join('')}</div>` : '';
     // One key while marking (patched in place), a new one only when the advice appears.
     setYard(sel.length === 3 ? 'tool3' : 'tool', `${head0}${acts}${notes}`, grid);
   }
@@ -2775,23 +2779,31 @@ self.onmessage = function (e) {
     return P.pair[k] === undefined ? 0 : P.pair[k] - P.single[a] - P.single[b];
   }
   const q10 = (xs) => { const v = xs.slice().sort((p1, p2) => p1 - p2); return v[Math.floor(v.length * 0.1)]; };
-  function toolNotes(s, best, a, paths) {
-    const out = [];
-    const held = s.toolList.map((h) => ({ h, v: synergy(best, h) })).filter((x) => x.v > 0.05).sort((p1, p2) => p2.v - p1.v);
-    if (held.length) out.push(`В связке с ${TOOLS[held[0].h].n}: ещё ${signed(held[0].v)} сверху того, что дают оба по отдельности.`);
-    else if (!s.toolList.length && !paths) {
+  // Each reason sits on the instrument it is about: the advice gets its "why" in the header, an alternative gets a
+  // short tag on its button with the full sentence in the tooltip.
+  function toolReasons(s, best, sel, a, combo) {
+    const r = { head: '', tags: {}, notes: [] };
+    const heldPair = (t) => s.toolList.map((h) => ({ h, v: synergy(t, h) })).filter((x) => x.v > 0.05).sort((p1, p2) => p2.v - p1.v)[0];
+    const pairLine = (t, p) => `${TOOLS[t].n} + ваш ${TOOLS[p.h].n}: вместе ещё ${signed(p.v)} к итогу сверх того, что каждый даёт отдельно.`;
+    const tag = (t, k, tip) => { const g = r.tags[t]; r.tags[t] = g ? { k: `${g.k}, ${k}`, tip: `${g.tip} ${tip}` } : { k, tip }; };
+    const own = heldPair(best);
+    r.head = own ? pairLine(best, own) : a ? 'Лучший средний итог на вашей доске.' : 'Сильнейший из трёх по рангу для вашей цели.';
+    if (!s.toolList.length && !combo) {
       const mates = C.TOOL_IDS.filter((t) => t !== best).map((t) => ({ t, v: synergy(best, t) })).filter((x) => x.v > 0.05).sort((p1, p2) => p2.v - p1.v).slice(0, 2);
-      if (mates.length) out.push(`Если игра даст второй инструмент, ищите ${mates.map((m) => TOOLS[m.t].n).join(' или ')}: вместе они сильнее суммы.`);
+      if (mates.length) r.notes.push(`Пара для ${TOOLS[best].n}: если игра даст ещё инструмент, ищите ${mates.map((m) => TOOLS[m.t].n).join(' или ')}.`);
     }
+    const alts = sel.filter((t) => t !== best && !(combo && combo.id === t));
+    for (const t of alts) { const p = heldPair(t); if (p && (!own || p.v > own.v)) tag(t, 'на связку', pairLine(t, p)); }
     if (a) {
       const ch = a.stats.filter((x) => x.action.type === 'choose');
       const top = ch.find((x) => x.action.id === best);
       const stable = ch.slice().sort((p1, p2) => q10(p2.samples) - q10(p1.samples))[0];
-      if (top && stable && stable !== top && stable.mean >= 0.9 * top.mean) {
-        out.push(`Стабильнее: ${TOOLS[stable.action.id].n}. В среднем на ${pct(1 - stable.mean / top.mean)} меньше, зато слабые забеги с ним лучше (10% худших: ${fmt(q10(stable.samples), 1)} против ${fmt(q10(top.samples), 1)}).`);
+      if (top && stable && q10(stable.samples) > q10(top.samples) && stable.mean >= 0.9 * top.mean && alts.includes(stable.action.id)) {
+        const lag = 1 - stable.mean / top.mean, dg = S.settings.goal === 'rainbow' ? 2 : 0, u = unitName();
+        tag(stable.action.id, 'надёжнее', `${lag >= 0.005 ? `В среднем немного слабее (на ${pct(lag)}),` : 'В среднем так же,'} но реже даёт плохой забег: 9 забегов из 10 приносят не меньше ${fmt(q10(stable.samples), dg)} ${u}, с ${TOOLS[best].n} — не меньше ${fmt(q10(top.samples), dg)}.`);
       }
     }
-    return out.length ? `<div class="toolnotes">${out.map((x) => `<p>${x}</p>`).join('')}</div>` : '';
+    return r;
   }
   // Chance that `partner` shows up in a later offer after taking `take`: offers left and offer weights come from the
   // calibrated log, each missed offer removes one instrument the player takes instead. Fixed seed keeps the number steady.
@@ -2839,7 +2851,7 @@ self.onmessage = function (e) {
     const tip = 'Шанс считается по вашим записям: сколько инструментов обычно приходит за забег, в какие дни и как часто игра предлагает каждый. Прирост — замер лаборатории для пары инструментов. Обе цифры уточняются сами, пока вы играете.';
     const card = (id, cls, k, d) => `<button class="tpath ${cls}" data-act="toolTake" data-id="${id}"><span class="tp-k">${k}</span><span class="tp-n">${ico(id)}${TOOLS[id].n}</span><span class="tp-d">${d}</span><span class="tp-go">Взял</span></button>`;
     const ownLine = combo.own ? ` <span data-tip="${tip}">Если позже придёт ${TOOLS[combo.own.p].n} (шанс ${pct(combo.own.pc)}), станет ещё сильнее.</span>` : '';
-    return `<div class="tpaths">${card(best, 'main', 'Надёжнее', `Лучший результат в среднем на вашей доске.${ownLine}`)}${card(combo.id, '', 'На связку', `<span data-tip="${tip}">Если позже придёт ${TOOLS[combo.partner].n} (шанс ${pct(combo.pc)}), забег сильнее лучшего расклада с ${TOOLS[best].n} на ${pct(combo.up)}.</span> ${combo.lag >= 0.005 ? `В среднем на ${pct(combo.lag)} слабее.` : 'В среднем почти поровну.'}`)}</div>`;
+    return `<div class="tpaths">${card(best, 'main', 'Лучший в среднем',`Лучший результат в среднем на вашей доске.${ownLine}`)}${card(combo.id, '', 'На связку', `<span data-tip="${tip}">Если позже придёт ${TOOLS[combo.partner].n} (шанс ${pct(combo.pc)}), итог будет на ${pct(combo.up)} выше, чем у ${TOOLS[best].n} даже в лучшем случае.</span> ${combo.lag >= 0.005 ? `В среднем на ${pct(combo.lag)} слабее.` : 'В среднем почти поровну.'}`)}</div>`;
   }
   function renderGiftStep() {
     const a = S.analysis;
@@ -2996,7 +3008,7 @@ self.onmessage = function (e) {
         const tipText = !x ? 'Считаю…' : best
           ? `Рекомендуемый ход. К концу забега в среднем ${total}, шанс новой радуги ${pct(x.pRainbow)}.`
           : sig ? `Хуже рекомендуемого в среднем на ${fmt(gap.m, dg)} ${unit}. К концу забега ${total}, новая радуга ${pct(x.pRainbow)}.`
-            : `Почти так же хорошо: разница ${fmt(Math.abs(gap.m), dg)} ± ${fmt(2 * gap.se, dg)} в пределах случайности, можно выбрать и его. К концу забега ${total}, новая радуга ${pct(x.pRainbow)}.`;
+            : `Почти так же хорошо: разница ${fmt(Math.abs(gap.m), dg)} ${unit} меньше случайного разброса (±${fmt(2 * gap.se, dg)}), можно выбрать и его. К концу забега ${total}, новая радуга ${pct(x.pRainbow)}.`;
         return `<div class="row ${best ? 'best' : ''}" data-hl="${c.cell === undefined ? '' : c.cell}" data-tip="${tipText}"><div class="rname">${ico(actionIcon(c))}<span>${actionLabel(c)}</span></div><div class="rv num">${val}</div><div class="track"><i style="width:${w}%"></i></div></div>`;
       }).join('');
       const g = gambleOf();
