@@ -1883,7 +1883,7 @@ self.onmessage = function (e) {
   function goalDef() {
     const g = S.settings.goal;
     if (g === 'custom') return C.customGoal(S.settings.colors.length ? S.settings.colors : [3, 4, 5]);
-    if (g === 'mine') { const fit = chestValues(); if (fit) return { V: fit.v.map((x) => x / fit.v[0]), scale: 1 }; return C.goalOf('value'); }
+    if (g === 'mine') { const fit = chestValues(); return fit ? mineGoal(fit) : C.goalOf('value'); }
     return C.goalOf(g);
   }
   function goalParams() {
@@ -1987,10 +1987,12 @@ self.onmessage = function (e) {
   // ---------- Worker for rollouts ----------
   let worker = null, jobId = 0;
   let relab = null;
-  // Starts a background re-measurement once RELAB_EVERY new runs were logged since the last one.
+  // Starts a background re-measurement once RELAB_EVERY new runs were logged since the last one,
+  // or as soon as chest prices are fitted and «По моей добыче» has no measured stats yet.
   function maybeRelab() {
     const runs = (S.settings.history || []).length, last = (S.settings.labCache && S.settings.labCache.atRuns) || 0;
-    if (relab || runs - last < RELAB_EVERY) return;
+    const fit = chestValues();
+    if (relab || (runs - last < RELAB_EVERY && !(fit && !(LAB.goalStats || {}).mine))) return;
     let w;
     try {
       const src = document.getElementById('core-src').textContent + '\n' + document.getElementById('lab-src').textContent;
@@ -2001,6 +2003,7 @@ self.onmessage = function (e) {
     const paramsFor = (g) => { const p = Object.assign({}, C.BASE_PARAMS, (LAB.params || {})[g] || {}); if ((LAB.toolRank || {})[g]) p.toolRank = LAB.toolRank[g]; const pr = (LAB.pairs || {})[g === 'rainbow' ? 'rainbow' : 'value']; if (pr) { p.single = pr.single; p.pair = pr.pair; } return p; };
     const goals = ['value', 'rainbow', 'mass', 'high'], jobs = [];
     for (const g of goals) jobs.push({ key: `stats|${g}`, goal: C.GOALS[g], params: paramsFor(g), tools: [], rewards: true, games: RELAB_GAMES.stats });
+    if (fit) jobs.push({ key: 'stats|mine', goal: mineGoal(fit), params: paramsFor('value'), tools: [], rewards: true, games: RELAB_GAMES.stats });
     for (const g of goals) { jobs.push({ key: `base|${g}`, goal: C.GOALS[g], params: paramsFor(g), tools: [], rewards: false, games: RELAB_GAMES.tool }); for (const t of C.TOOL_IDS) jobs.push({ key: `tool|${g}|${t}`, goal: C.GOALS[g], params: paramsFor(g), tools: [t], rewards: false, games: RELAB_GAMES.tool }); }
     const ids = C.TOOL_IDS.slice().sort();
     for (const g of ['value', 'rainbow']) {
@@ -2017,6 +2020,7 @@ self.onmessage = function (e) {
       if (next < jobs.length) return send();
       w.terminate(); relab = null;
       const goalStats = {}, toolDelta = {}, toolRank = {}, pairs = {};
+      if (out['stats|mine']) goalStats.mine = out['stats|mine'];
       for (const g of goals) {
         goalStats[g] = out[`stats|${g}`];
         const base = out[`base|${g}`].mean, d = {};
@@ -2244,12 +2248,21 @@ self.onmessage = function (e) {
     const stats = LAB.goalStats || {};
     const resume = S.run && S.run.s ? `<div class="resume fade-in"><span>${ico('lantern')}</span><div class="txt"><b>Незавершённый забег: день ${S.run.s.day}</b><span>Радуг в хранилище: ${S.run.s.vault} · узников на доске: ${C.crowd(S.run.s)}</span></div><button class="btn small primary" data-act="resume">Вернуться к доске</button></div>` : '';
     const fit = chestValues();
-    const goalCards = GOALS.filter((g) => g.id !== 'custom' && (g.id !== 'mine' || fit)).map((g) => {
+    const shown = GOALS.filter((g) => g.id !== 'custom' && (g.id !== 'mine' || fit));
+    const worth = {};
+    for (const g of shown) if (stats[g.id] && stats[g.id].tiers) worth[g.id] = goalWorth(stats[g.id], fit);
+    const order = Object.keys(worth).sort((a, b) => worth[b] - worth[a]), best = order[0] || 'value';
+    const close = order.length > 1 && worth[order[1]] > worth[best] * 0.98 ? ` Почти поровну с «${GOALS.find((g) => g.id === order[1]).n}»: разница меньше 2%, это в пределах точности замера.` : '';
+    const multNote = pi.mult > 1.001 ? `, с петами и компасом ×${fmt(pi.mult, 2)}` : '';
+    const worthTip = fit ? `Средняя добыча за забег в FE по ценам сундуков из ваших ${fit.n} записей${multNote}.`
+      : `Очки ценности за забег: Обычный сундук — 1, каждая редкость вдвое дороже, радужный — 48${multNote}. После ${FIT_MIN} забегов с записанной добычей здесь будут FE по вашим ценам.`;
+    const goalCards = shown.map((g) => {
       const gs = stats[g.id];
-      const stat = gs ? `<div class="g-stats"><span data-tip="Сколько радужных сундуков в среднем за забег">Радужных <em>${fmt(gs.rainbows, 2)}</em></span><span data-tip="Сколько всего сундуков открывается после бунта, всех цветов">Всего сундуков <em>${fmt(gs.inmates + gs.rainbows, 1)}</em></span><span data-tip="Шанс, что за забег будет хотя бы один радужный">Хотя бы 1 радуга <em>${pct(gs.pRb)}</em></span></div>`
+      const w = worth[g.id] === undefined ? '' : `<span data-tip="${worthTip}">${fit ? `≈ <em>${fmt(worth[g.id], 0)}</em> FE` : `Ценность <em>${fmt(worth[g.id], 0)}</em>`}</span>`;
+      const stat = gs ? `<div class="g-stats">${w}<span data-tip="Сколько радужных сундуков в среднем за забег">Радужных <em>${fmt(gs.rainbows, 2)}</em></span><span data-tip="Сколько всего сундуков открывается после бунта, всех цветов">Всего сундуков <em>${fmt(gs.inmates + gs.rainbows, 1)}</em></span><span data-tip="Шанс, что за забег будет хотя бы один радужный">Хотя бы 1 радуга <em>${pct(gs.pRb)}</em></span></div>`
         : g.id === 'mine' ? `<div class="g-stats"><span>Каждая редкость дороже ×${fmt(fit.r, 2)}. FE за сундук:</span>${TIERS.map((t, i) => `<span data-tip="${t.n}"><i class="dot" style="background:${i === 5 ? 'var(--r5)' : t.c}"></i><em>${fmt(fit.v[i], 0)}</em></span>`).join('')}</div>` : '';
-      const rec = g.id === 'value' ? `<span class="rec" data-tip="Рекомендуем: почти столько же радуг, сколько у охоты за ними, и больше сундуков">${ico('star')}Рекомендуем</span>` : '';
-      return `<button class="goal ${set.goal === g.id ? 'on' : ''} ${g.id === 'value' ? 'is-rec' : ''}" data-goal="${g.id}" aria-pressed="${set.goal === g.id}"><div class="g-top"><span class="g-ico">${ico(g.icon)}</span><b>${g.n}</b>${rec}</div><p>${g.d}</p>${stat}</button>`;
+      const rec = g.id === best ? `<span class="rec" data-tip="${fit ? 'Больше всего FE за забег по ценам сундуков из ваших записей.' : `Больше всего очков ценности по модели цен. После ${FIT_MIN} забегов с записанной добычей значок встанет по вашей добыче в FE.`}${close}">${ico('star')}Рекомендуем</span>` : '';
+      return `<button class="goal ${set.goal === g.id ? 'on' : ''} ${g.id === best ? 'is-rec' : ''}" data-goal="${g.id}" aria-pressed="${set.goal === g.id}"><div class="g-top"><span class="g-ico">${ico(g.icon)}</span><b>${g.n}</b>${rec}</div><p>${g.d}</p>${stat}</button>`;
     }).join('');
     const cg = GOALS.find((g) => g.id === 'custom');
     const customRow = `<button class="goal wide ${set.goal === 'custom' ? 'on' : ''}" data-goal="custom" aria-pressed="${set.goal === 'custom'}"><div class="g-top"><span class="g-ico">${ico(cg.icon)}</span><b>${cg.n}</b></div><p>${cg.d}</p></button>`;
@@ -2278,7 +2291,7 @@ self.onmessage = function (e) {
       <div class="hero fade-in"><h1>Помощник надзирателя</h1><p>Повторяйте на доске то, что показывает игра, а помощник подскажет лучший ход и честно покажет шансы. Один шаг за раз.</p></div>
       ${resume}
       <section class="sec has-note"><div class="sec-h"><h2>Что собираем?</h2><span>От цели зависит каждый совет. Сменить можно в любой момент, и на доске тоже.</span></div><div class="goals">${goalCards}${customRow}</div>${colors}
-        <aside class="mnote right">Петы и компас умножают добычу всех сундуков одинаково, поэтому стратегию от них менять не нужно.</aside></section>
+        <aside class="mnote right">Петы и компас умножают добычу всех сундуков одинаково: оценки на карточках растут вместе, и лучшая стратегия от них не меняется.</aside></section>
       <section class="sec group"><button class="bonus-toggle" data-act="bonus" aria-expanded="${S.ui.bonusOpen}">${ico('compass')}<span class="sum">${bonusSum} · ${set.stage}</span><span class="mult num" data-tip="Во сколько раз больше добычи из каждого сундука с петами и компасом">×${fmt(pi.mult, 2)}</span>${ico('arrow', 'chev')}</button>${bonus}</section>
       <div class="cta-row"><button class="btn primary" data-act="start">${S.run ? 'Новый забег' : 'Начать день 1'} ${ico('arrow')}</button><button class="linkish" data-act="mid">Ввести доску с середины забега</button></div>
       ${historyBlock()}
@@ -2352,6 +2365,9 @@ self.onmessage = function (e) {
     v.push(Math.max(v[4], freeC ? C2 : 1.5 * A * Math.pow(r, 5)));
     return { v, r, n: rows.length, freeC };
   }
+  function mineGoal(fit) { return { V: fit.v.map((x) => x / fit.v[0]), scale: 1 }; }
+  // Worth of a goal's average riot: FE once chest prices are fitted, model points of «Растить всех» before that.
+  function goalWorth(gs, fit) { const V = fit ? fit.v : C.GOALS.value.V; return gs.tiers.reduce((a, k, t) => a + k * V[t], 0) * petInfo().mult; }
 
   // ---------- Board ----------
   const POS = Array.from({ length: 16 }, (_, n) => {
@@ -3654,7 +3670,8 @@ self.onmessage = function (e) {
       <p class="note">Средние за 20-дневный забег: инструменты по вашим данным, дар за каждую радугу, без петов. ${S.settings.labCache ? 'Пересчитано по вашим шансам.' : `Заводская оценка: событие «!» за ${LAB.eventChance || 10}% дверей, ${LAB.games ? `${(LAB.games / 1000).toFixed(0)} тыс. забегов на стратегию` : ''}.`}</p>
       ${GOALS.map((g) => `<h3>${g.n}</h3><p>${g.d}</p>`).join('')}
       <h3>Что такое «очко ценности»</h3><p>Так «Растить всех» сравнивает ходы: Обычный сундук — 1 очко, Магический — 2, Редкий — 4, Легендарный — 8, Высший — 16, радужный — 48. Каждый ранг вдвое дороже предыдущего, а радуга втрое дороже Высшего, потому что даёт ещё и дар. Это модель для сравнения ходов, а не цена в FE.</p>
-      <h3>Петы и компас не меняют стратегию</h3><p>Они умножают добычу всех сундуков одинаково, поэтому лучший ход от них не зависит. Исключение одно — обновление инструментов у Twin Inquisitors с ранга 2: оно учтено автоматически.</p>`,
+      <h3>Какую стратегию рекомендуем</h3><p>Значок «Рекомендуем» стоит на карточке с самой большой оценкой за забег: сколько сундуков каждой редкости стратегия приносит в среднем, умноженное на цену такого сундука. Пока записано меньше ${FIT_MIN} забегов с добычей, цена — очки ценности (ниже), и по ним выигрывает «Растить всех». Потом цена берётся в FE из ваших записей, и значок может перейти на другую стратегию. «По моей добыче» тоже сравнивается замером: она играет с настройками «Растить всех», поэтому при очень крутых ценах может уступать готовым стратегиям.</p>
+      <h3>Петы и компас не меняют стратегию</h3><p>Они умножают добычу всех сундуков одинаково: оценки на карточках растут в одно и то же число раз, поэтому лучшая стратегия и лучший ход от них не зависят. Исключение одно — обновление инструментов у Twin Inquisitors с ранга 2: оно учтено автоматически.</p>`,
     tools: () => {
       const g = S.settings.goal === 'custom' || S.settings.goal === 'mine' ? 'value' : S.settings.goal;
       const rank = goalParams().toolRank;
@@ -3704,7 +3721,7 @@ self.onmessage = function (e) {
       <h3>Инструментов за забег (этап ${curStage()})</h3><p>${cr.takes.map((p, i) => `${i + 1}: ${pct(p)}`).join(' · ')} — по ${nSum(c.takes || [])} вашим забегам на этом этапе, данным других этапов и исходной оценке.</p>
       ${stageTable()}
       ${toolRows ? `<h3>Предложения инструментов: ${c.offers}</h3><p class="note">Чем чаще инструмент предлагают, тем выше его вес в прогонах: так помощник учитывает, что одни инструменты встречаются реже других.</p><div class="tbl-wrap"><table class="wt"><tr><th>Инструмент</th><th class="r">Раз</th><th class="r">В предложениях</th></tr>${toolRows}</table></div>` : ''}
-      <h3>Что подстраивается само</h3><p>Шансы дверей, замен и знака «!» пересчитываются после каждого вашего шага: на них сразу опираются советы, полоска «Кто за дверью» и прогоны. Цифры на карточках стратегий, ранги инструментов и таблица связок пересчитываются в фоне каждые ${RELAB_EVERY} записанных забегов — по вашим шансам дверей, «!» и числу инструментов. ${S.settings.labCache ? `Последний раз: ${new Date(S.settings.labCache.at).toLocaleDateString('ru-RU')}, этап ${S.settings.labCache.stage}.` : 'Пока используются заводские цифры.'} ${relab ? `Сейчас идёт пересчёт: ${relab.total - relab.left} из ${relab.total}.` : ''} Вручную обновлять нужно только сами правила игры, когда их меняет патч.</p>
+      <h3>Что подстраивается само</h3><p>Шансы дверей, замен и знака «!» пересчитываются после каждого вашего шага: на них сразу опираются советы, полоска «Кто за дверью» и прогоны. Цифры на карточках стратегий, ранги инструментов и таблица связок пересчитываются в фоне каждые ${RELAB_EVERY} записанных забегов — по вашим шансам дверей, «!» и числу инструментов. Карточка «По моей добыче» измеряется сразу, как только появились цены сундуков. ${S.settings.labCache ? `Последний раз: ${new Date(S.settings.labCache.at).toLocaleDateString('ru-RU')}, этап ${S.settings.labCache.stage}.` : 'Пока используются заводские цифры.'} ${relab ? `Сейчас идёт пересчёт: ${relab.total - relab.left} из ${relab.total}.` : ''} Вручную обновлять нужно только сами правила игры, когда их меняет патч.</p>
       ${(() => { const fit = chestValues(); return fit ? `<h3>Цена сундука по вашим записям</h3><div class="tbl-wrap"><table class="wt"><tr>${TIERS.map((t) => `<th class="r">${t.n}</th>`).join('')}</tr><tr>${fit.v.map((v) => `<td class="r num">${fmt(v, 0)} FE</td>`).join('')}</tr></table></div><p class="note">По ${fit.n} записанным забегам, приведено к добыче без петов и компаса: каждая следующая редкость дороже примерно в ${fmt(fit.r, 2)} раза${fit.freeC ? '' : ', радужный пока оценён как полторы ступени сверху: радужных сундуков в записях меньше трёх'}. Используется стратегией «По моей добыче».</p>` : `<p>После ${FIT_MIN} записанных забегов здесь появится цена сундука каждой редкости в FE по вашей добыче, и откроется стратегия «По моей добыче».</p>`; })()}
       <h3>Добыча</h3><p>После бунта можно записать добычу из сундуков в FE. Из этого считаются средняя добыча за забег по этапам и окупаемость компаса. Время забега помощник не считает: между забегами бывают перерывы, и честно его не измерить. Сверхредкий дроп хранится в истории, но в средние не входит.</p>
       <h3>Тестовые забеги</h3><p>Если вы кликали наугад, чтобы опробовать помощника, сбросьте статистику («Сбросить» в разделе «Ваши забеги»): иначе выдуманные двери и инструменты будут влиять на шансы. Петы, компас и цены не сбрасываются.</p>
