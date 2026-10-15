@@ -2749,7 +2749,7 @@ self.onmessage = function (e) {
       if (measured && a.rec.type === 'refresh') best = a.stats.filter((x) => x.action.type === 'choose').sort((p1, p2) => p2.mean - p1.mean)[0].action.id;
     }
     const combo = sel.length === 3 && measured && !canRefresh ? comboPick(s, sel, best, a) : null;
-    const grid = `<div class="tools-grid">${C.TOOL_IDS.map((t) => `<button data-tool="${t}" class="${sel.includes(t) ? 'sel' : ''} ${best === t ? 'best' : ''} ${combo && combo.id === t ? 'alt' : ''}" ${C.has(s, t) ? 'disabled' : ''} data-tip="${toolTip(t)}" aria-label="${TOOLS[t].n}, ранг ${toolTier(t)}">${ico(t)}</button>`).join('')}</div>`;
+    const grid = `<div class="tools-grid">${C.TOOL_IDS.map((t) => `<button data-tool="${t}" class="${sel.includes(t) ? 'sel' : ''} ${best === t ? 'best' : ''} ${combo && combo.id === t ? 'alt' : ''}" ${C.has(s, t) || (sel.length === 3 && !sel.includes(t)) ? 'disabled' : ''} data-tip="${toolTip(t)}" aria-label="${TOOLS[t].n}, ранг ${toolTier(t)}">${ico(t)}</button>`).join('')}</div>`;
     const head0 = sel.length < 3
       ? `<div class="head"><h3>Высший! Выбор инструмента</h3><div class="sub">Отметьте 3 инструмента, которые предложила игра: осталось ${3 - sel.length}. Наведите на инструмент, чтобы прочитать, что он делает.</div></div>`
       : `<div class="head"><h3>${canRefresh ? 'Обновите предложение' : `Возьмите ${TOOLS[best].n}`}</h3><div class="sub">${canRefresh ? 'Новое предложение в среднем даст больше, чем лучшее из этих трёх на вашей доске.' : TOOLS[best].d}${measured ? '' : ' <span class="hint">Сверяю с вашей доской…</span>'}</div></div>`;
@@ -3548,7 +3548,8 @@ self.onmessage = function (e) {
     if (d.tool) {
       const sub = S.run.sub; sub.offer = sub.offer || [];
       const i = sub.offer.indexOf(d.tool);
-      if (i >= 0) sub.offer.splice(i, 1); else if (sub.offer.length < 3) sub.offer.push(d.tool);
+      if (i < 0 && sub.offer.length >= 3) return;
+      if (i >= 0) sub.offer.splice(i, 1); else sub.offer.push(d.tool);
       persist(); analyze(); renderYard(); return;
     }
     if (d.gift) return takeGift(d.gift);
