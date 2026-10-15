@@ -2793,10 +2793,17 @@ self.onmessage = function (e) {
       if (mates.length) r.notes.push(`Пара для ${TOOLS[best].n}: если игра даст ещё инструмент, ищите ${mates.map((m) => TOOLS[m.t].n).join(' или ')}.`);
     }
     const alts = sel.filter((t) => t !== best && !(combo && combo.id === t));
-    for (const t of alts) { const p = heldPair(t); if (p && (!own || p.v > own.v)) tag(t, 'на связку', pairLine(t, p)); }
     if (a) {
       const ch = a.stats.filter((x) => x.action.type === 'choose');
       const top = ch.find((x) => x.action.id === best);
+      // The pair table knows neither this board nor the third instrument, the rollouts do: tag only a close rival and
+      // say how the rollouts settled it, so the tag never reads as advice the engine missed.
+      for (const t of alts) {
+        const p = heldPair(t), m = ch.find((x) => x.action.id === t);
+        if (!p || (own && p.v <= own.v) || !top || !m || m.mean < 0.9 * top.mean) continue;
+        const g = pairedGap(top.samples, m.samples), dg = S.settings.goal === 'rainbow' ? 2 : 1;
+        tag(t, 'на связку', `${pairLine(t, p)} Связка уже учтена в оценке хода: ${g.m > 2 * g.se ? `на этой доске ${TOOLS[best].n} всё равно в среднем больше на ${fmt(g.m, dg)} ${unitName()}.` : `на этой доске они почти равны, можно взять и ${TOOLS[t].n}.`}`);
+      }
       const stable = ch.slice().sort((p1, p2) => q10(p2.samples) - q10(p1.samples))[0];
       if (top && stable && q10(stable.samples) > q10(top.samples) && stable.mean >= 0.9 * top.mean && alts.includes(stable.action.id)) {
         const lag = 1 - stable.mean / top.mean, dg = S.settings.goal === 'rainbow' ? 2 : 0, u = unitName();
